@@ -10,10 +10,9 @@
 // @react-native-firebase/analytics instead.
 
 import { initializeApp } from 'firebase/app';
-import {
-  initializeAuth,
-  getReactNativePersistence
-} from 'firebase/auth';
+import { initializeAuth } from 'firebase/auth';
+// @ts-ignore - Firebase RN-specific export not in main types
+import { getReactNativePersistence } from '@firebase/auth/dist/rn/index.js';
 import {
   initializeFirestore,
   persistentLocalCache,
