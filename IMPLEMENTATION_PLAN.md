@@ -5,42 +5,42 @@ Build a privacy-focused mobile app showing real-time crowd levels at campus loca
 
 ---
 
-## Phase 1: Project Setup
+## Phase 1: Project Setup ✅ COMPLETE
 
-### 1.1 Install Dependencies
+### 1.1 Install Dependencies ✅
 ```bash
 npx expo install firebase expo-location @react-native-async-storage/async-storage react-native-maps
 ```
 
-### 1.2 Firebase Setup
-- Create Firebase project at console.firebase.google.com
-- Enable Anonymous Authentication
-- Create Firestore database (test mode initially)
-- Copy web config credentials
+### 1.2 Firebase Setup ✅
+- [x] Create Firebase project at console.firebase.google.com
+- [x] Enable Anonymous Authentication
+- [x] Create Firestore database (test mode initially)
+- [x] Copy web config credentials
 
-### 1.3 Files to Create
-| File | Purpose |
-|------|---------|
-| `config/firebase.ts` | Firebase init with offline persistence |
-| `types/index.ts` | TypeScript interfaces (Place, CheckIn, LocationState) |
-| `constants/config.ts` | App constants (30m radius, 90min cooldown, etc.) |
-| `utils/haversine.ts` | Distance calculation function |
+### 1.3 Files to Create ✅
+| File | Purpose | Status |
+|------|---------|--------|
+| `config/firebase.ts` | Firebase init with offline persistence | ✅ |
+| `types/index.ts` | TypeScript interfaces (Place, CheckIn, LocationState) | ✅ |
+| `constants/config.ts` | App constants (3m radius, 90min cooldown, etc.) | ✅ |
+| `utils/haversine.ts` | Distance calculation function | ✅ |
 
-### 1.4 Update app.json
-- Add location permission strings for iOS/Android
-- Add expo-location plugin
+### 1.4 Update app.json ✅
+- [x] Add location permission strings for iOS/Android
+- [x] Add expo-location plugin
 
 ---
 
-## Phase 2: Core Services
+## Phase 2: Core Services 🟡 IN PROGRESS
 
-| File | Purpose |
-|------|---------|
-| `services/auth.ts` | Anonymous sign-in, auth state listener |
-| `services/location.ts` | Permission handling, location watching |
-| `services/places.ts` | Firestore real-time subscription for places |
-| `services/checkin.ts` | Submit check-ins, manage cooldowns |
-| `services/proximity.ts` | Calculate distance to POIs, find nearby places |
+| File | Purpose | Status |
+|------|---------|--------|
+| `services/auth.ts` | Anonymous sign-in, auth state listener | ✅ |
+| `services/location.ts` | Permission handling, location watching | ✅ |
+| `services/places.ts` | Firestore real-time subscription for places | ⬜ |
+| `services/checkin.ts` | Submit check-ins, manage cooldowns | ⬜ |
+| `services/proximity.ts` | Calculate distance to POIs, find nearby places | ⬜ |
 
 ---
 
