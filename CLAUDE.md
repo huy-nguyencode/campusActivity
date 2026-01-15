@@ -25,7 +25,7 @@ npm run lint       # Run ESLint
 
 ## Remember
 
-- As a CS student, I want to learn every aspect of this project as I am building, explain any valuable patterns, code, structure, optimization, I should know about in any code that is written
+- As a CS student, I want to learn every aspect of this project as I am building, explain any valuable patterns, code, structure, optimization, I should know about in any code that is written. For actual important code use in real production, let me manually write that
 
 ### Component Patterns
 
