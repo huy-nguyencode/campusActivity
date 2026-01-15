@@ -23,6 +23,10 @@ npm run lint       # Run ESLint
 - `app/(tabs)/_layout.tsx` - Tab navigator configuration with HapticTab buttons
 - `app/modal.tsx` - Modal screen example
 
+## Remember
+
+- As a CS student, I want to learn every aspect of this project as I am building, explain any valuable patterns, code, structure, optimization, I should know about in any code that is written
+
 ### Component Patterns
 
 **Themed Components**: `ThemedText` and `ThemedView` accept optional `lightColor` and `darkColor` props for theme-aware styling.
