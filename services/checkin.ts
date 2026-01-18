@@ -1,15 +1,38 @@
-/* checkin service using firebase firestore
-this service will be used to submit check-ins to the checkins collection
-*/
+/**
+ * Check-in Service
+ *
+ * Handles user check-ins to campus locations using Firebase Firestore.
+ * Implements a cooldown system using AsyncStorage to prevent spam submissions.
+ *
+ * @module services/checkin
+ */
 import {db} from '@/config/firebase';
-import {collection, addDoc, serverTimestamp} from 'firebase/firestore';
+import {collection, addDoc, serverTimestamp, getDoc, doc, Timestamp} from 'firebase/firestore';
 import {CheckIn, BusyLevel} from '@/types';
 import { CONFIG } from '@/constants/config';
 import {getCurrentUserUID} from '@/services/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-//user submit check-in
+/**
+ * Submits a check-in for a specific location with a busy level rating.
+ *
+ * Creates a new check-in document in Firestore and sets a cooldown to prevent
+ * the same user from submitting multiple check-ins for the same place in quick succession.
+ *
+ * @param placeId - The unique identifier of the place being checked into
+ * @param level - The user's assessment of how busy the location is
+ * @returns The created CheckIn object if successful, null if:
+ *          - User is not authenticated
+ *          - User is on cooldown for this place
+ *          - Firestore write fails
+ *
+ * @example
+ * const checkIn = await submitCheckin('library-main', 'moderate');
+ * if (checkIn) {
+ *   console.log('Check-in submitted:', checkIn.id);
+ * }
+ */
 export async function submitCheckin(placeId: string, level: BusyLevel): Promise<CheckIn | null> {
         //get user uid
         const uid = await getCurrentUserUID();
@@ -23,20 +46,33 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
         }
     try {
         //add check-in to firestore
-        const checkIn = await addDoc(collection(db, 'checkins'), {
+        const checkInRef = await addDoc(collection(db, 'checkins'), {
             placeId,
             level,
             timestamp: serverTimestamp(),
             uid,
         });
+        //read the document back to get the server-set timestamp
+        const checkInDoc = await getDoc(checkInRef);
+        if (!checkInDoc.exists()) {
+            console.error('Check-in document not found after creation');
+            return null;
+        }
+        //extract the server timestamp from the document
+        const data = checkInDoc.data();
+        const timestampValue = data.timestamp;
+        //convert Firestore Timestamp to JavaScript Date
+        const timestampDate = timestampValue instanceof Timestamp 
+            ? timestampValue.toDate() 
+            : new Date(timestampValue);
         //set cooldown
         await setCooldown(placeId);
-        //return the check-in
+        //return the check-in with server-set timestamp
         return {
-            id: checkIn.id,
+            id: checkInRef.id,
             placeId,
             level,
-            timestamp: new Date(),
+            timestamp: timestampDate,
             uid,
         };
          
@@ -46,10 +82,26 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
     }
 }
 
+/**
+ * Generates a unique AsyncStorage key for a place's cooldown timestamp.
+ *
+ * @param placeId - The unique identifier of the place
+ * @returns A namespaced storage key in the format `checkin_cooldown_{placeId}`
+ */
 function getCooldownStorageKey(placeId: string): string {
     return `checkin_cooldown_${placeId}`;
 }
 
+/**
+ * Checks if the user is currently on cooldown for a specific place.
+ *
+ * Compares the stored last check-in timestamp against the configured cooldown
+ * duration (defined in CONFIG.CHECK_IN_COOLDOWN in minutes).
+ *
+ * @param placeId - The unique identifier of the place to check
+ * @returns True if cooldown is active (user cannot check in), false otherwise.
+ *          Also returns false if an error occurs (fail-open behavior).
+ */
 export async function isOnCoolDown(placeId: string): Promise<boolean> {
     try {
         //create a storage key
@@ -72,6 +124,14 @@ export async function isOnCoolDown(placeId: string): Promise<boolean> {
     }
 }
 
+/**
+ * Sets a cooldown timestamp for a place after a successful check-in.
+ *
+ * Stores the current timestamp in AsyncStorage. This timestamp is later
+ * compared by isOnCoolDown() to determine if the user can submit another check-in.
+ *
+ * @param placeId - The unique identifier of the place to set cooldown for
+ */
 async function setCooldown(placeId: string): Promise<void> {
     try {
         //create a storage key
@@ -86,6 +146,15 @@ async function setCooldown(placeId: string): Promise<void> {
     }
 }
 
+/**
+ * Retrieves the last check-in timestamp for a specific place.
+ *
+ * Useful for displaying to users when they last checked in or
+ * calculating remaining cooldown time.
+ *
+ * @param placeId - The unique identifier of the place
+ * @returns The Date of the last check-in, or null if no check-in exists or an error occurs
+ */
 export async function getCooldown(placeId: string): Promise<Date | null> {
     try {
         //create a storage key
@@ -106,7 +175,14 @@ export async function getCooldown(placeId: string): Promise<Date | null> {
     }
 }
 
-//clear cooldown (for testing)
+/**
+ * Clears the cooldown for a specific place.
+ *
+ * Primarily intended for testing purposes to reset state between tests.
+ * Removes the stored timestamp from AsyncStorage, allowing immediate check-in.
+ *
+ * @param placeId - The unique identifier of the place to clear cooldown for
+ */
 export async function clearCooldown(placeId: string): Promise<void> {
     try {
         //get the storage key
