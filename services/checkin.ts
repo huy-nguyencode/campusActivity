@@ -52,6 +52,8 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
             timestamp: serverTimestamp(),
             uid,
         });
+        //set cooldown
+        await setCooldown(placeId);
         //read the document back to get the server-set timestamp
         const checkInDoc = await getDoc(checkInRef);
         if (!checkInDoc.exists()) {
@@ -65,8 +67,7 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
         const timestampDate = timestampValue instanceof Timestamp 
             ? timestampValue.toDate() 
             : new Date(timestampValue);
-        //set cooldown
-        await setCooldown(placeId);
+       
         //return the check-in with server-set timestamp
         return {
             id: checkInRef.id,
