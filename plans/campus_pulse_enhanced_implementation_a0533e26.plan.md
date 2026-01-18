@@ -232,18 +232,18 @@ Campus Pulse is a React Native (Expo) mobile app for iOS & Android that provides
 
 ### Phase 1: Core Foundation
 
-1. Set up Expo project with TypeScript
-2. Configure Firebase project and SDK
-3. Implement anonymous authentication
-4. Set up Firestore collections and security rules
+1. ✅ Set up Expo project with TypeScript
+2. ✅ Configure Firebase project and SDK
+3. ✅ Implement anonymous authentication (`services/auth.ts`)
+4. ⏳ Set up Firestore collections and security rules
 5. Create basic map view with static POI markers
 
 ### Phase 2: Location & Proximity
 
-1. Implement Expo Location with foreground-only permission
-2. Build proximity detection engine (haversine formula)
+1. ✅ Implement Expo Location with foreground-only permission (`services/location.ts`)
+2. ✅ Build proximity detection engine - haversine formula (`utils/haversine.ts`)
 3. Create check-in UI with emoji buttons
-4. Implement 90-minute cooldown logic
+4. ✅ Implement 90-minute cooldown logic (`services/checkin.ts`)
 5. Add manual place picker fallback
 
 ### Phase 3: Real-Time Updates

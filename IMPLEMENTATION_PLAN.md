@@ -38,8 +38,8 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 |------|---------|--------|
 | `services/auth.ts` | Anonymous sign-in, auth state listener | ✅ |
 | `services/location.ts` | Permission handling, location watching | ✅ |
-| `services/places.ts` | Firestore real-time subscription for places | ✅ |
-| `services/checkin.ts` | Submit check-ins, manage cooldowns | ⬜ |
+| `services/checkin.ts` | Submit check-ins, manage cooldowns | ✅ |
+| `services/places.ts` | Firestore real-time subscription for places | ⬜ |
 | `services/proximity.ts` | Calculate distance to POIs, find nearby places | ⬜ |
 
 ---
