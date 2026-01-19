@@ -28,10 +28,12 @@ export function useAuth() {
             //already have a user, so no need to sign in anonymously
             if (firebaseUser) {
                 setUser(firebaseUser);
+                setError(null);
                 setIsLoading(false);
             } else {
-                try {
-                    await signInAnon();
+                try {1
+                    setIsLoading(true);
+                    const newUser = await signInAnon();
                 } catch (error) {
                     setError((error as Error).message);
                     setIsLoading(false);
