@@ -1,16 +1,31 @@
-/*
- * Location hook for Campus Pulse.
- * 
- * This hook is used to get the user's location and listen for changes in the location.
- * 
- * @returns An object containing the location, loading state, and error.
- */
-
 import { useState, useEffect, useCallback } from 'react';
-import {LocationState, LocationPermissionStatus} from '@/types';
-import { checkLocationPermission, requestLocationPermission, watchLocation } from '@/services/location';
 import * as Location from 'expo-location';
+import { LocationState, LocationPermissionStatus } from '@/types';
+import { checkLocationPermission, requestLocationPermission, watchLocation } from '@/services/location';
 
+/**
+ * Custom hook for managing device location and permissions.
+ *
+ * This hook checks location permission on mount, watches for location updates
+ * when permission is granted, and provides a function to request permission.
+ *
+ * @returns An object containing location state, permission status, and controls.
+ * @example
+ * const { location, permission, isLoading, error, requestPermission } = useLocation();
+ *
+ * if (permission === 'undetermined') {
+ *   return <Button onPress={requestPermission} title="Enable Location" />;
+ * }
+ * if (permission === 'denied') {
+ *   return <Text>Location permission denied</Text>;
+ * }
+ * if (isLoading) {
+ *   return <LoadingScreen />;
+ * }
+ * if (location) {
+ *   return <Text>Lat: {location.latitude}, Lon: {location.longitude}</Text>;
+ * }
+ */
 export function useLocation() {
     const [location, setLocation] = useState<LocationState | null>(null);
     const [permission, setPermission] = useState<LocationPermissionStatus>('undetermined');
