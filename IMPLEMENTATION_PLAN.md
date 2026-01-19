@@ -44,15 +44,15 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 
 ---
 
-## Phase 3: React Hooks
+## Phase 3: React Hooks (IN PROGRESS)
 
-| Hook | Purpose |
-|------|---------|
-| `hooks/useAuth.ts` | Auth state management, auto sign-in |
-| `hooks/useLocation.ts` | Location tracking with permission flow |
-| `hooks/usePlaces.ts` | Real-time places subscription |
-| `hooks/useProximity.ts` | Combine location + places for nearby detection |
-| `hooks/useCheckIn.ts` | Check-in submission with cooldown state |
+| Hook | Purpose | Status |
+|------|---------|--------|
+| `hooks/useAuth.ts` | Auth state management, auto sign-in | ✅ |
+| `hooks/useLocation.ts` | Location tracking with permission flow | ✅ |
+| `hooks/usePlaces.ts` | Real-time places subscription | ✅ |
+| `hooks/useProximity.ts` | Combine location + places for nearby detection | ✅ |
+| `hooks/useCheckIn.ts` | Check-in submission with cooldown state | ⏳ |
 
 ---
 
