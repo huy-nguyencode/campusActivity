@@ -32,15 +32,15 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 
 ---
 
-## Phase 2: Core Services 🟡 IN PROGRESS
+## Phase 2: Core Services ✅ COMPLETE
 
 | File | Purpose | Status |
 |------|---------|--------|
 | `services/auth.ts` | Anonymous sign-in, auth state listener | ✅ |
 | `services/location.ts` | Permission handling, location watching | ✅ |
 | `services/checkin.ts` | Submit check-ins, manage cooldowns | ✅ |
-| `services/places.ts` | Firestore real-time subscription for places | ⬜ |
-| `services/proximity.ts` | Calculate distance to POIs, find nearby places | ⬜ |
+| `services/places.ts` | Firestore real-time subscription for places | ✅ |
+| `services/proximity.ts` | Calculate distance to POIs, find nearby places | ✅ |
 
 ---
 

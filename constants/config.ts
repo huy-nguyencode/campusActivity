@@ -10,7 +10,10 @@ export const CONFIG = {
     LOCATION_UPDATE_INTERVAL: 5000, // milliseconds
     // minimum distance to update location
     MINIMUM_DISTANCE_TO_UPDATE_LOCATION: 10, // meters
-    
+    // minimum accuracy to update location
+    MINIMUM_ACCURACY_TO_UPDATE_LOCATION: 10, // meters
+    // minimum accuracy to check in
+    MINIMUM_ACCURACY_TO_CHECK_IN: 10, // meters
     //cooldown time for check in
     CHECK_IN_COOLDOWN: 90, // minutes
 
