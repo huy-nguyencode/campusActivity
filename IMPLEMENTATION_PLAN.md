@@ -56,7 +56,7 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 
 ---
 
-## Phase 4: Navigation & Screens
+## Phase 4: Navigation & Screens (IN PROGRESS)
 
 ### Structure
 ```
@@ -74,10 +74,15 @@ app/
 ```
 
 ### Screen Details
-1. **welcome.tsx** - Request location permission, explain privacy
-2. **(tabs)/index.tsx** - Map with colored markers, current location
-3. **(tabs)/places.tsx** - Scrollable list fallback if location denied
-4. **place/[id].tsx** - Check-in UI with 3 emoji buttons, cooldown timer
+| Screen | Purpose | Status |
+|--------|---------|--------|
+| `_layout.tsx` | Root layout with auth state handling | ✅ |
+| `index.tsx` | Entry redirect based on permission | ✅ |
+| `(auth)/welcome.tsx` | Request location permission | ✅ |
+| `(tabs)/_layout.tsx` | Tab navigator (Map + Places) | ✅ |
+| `(tabs)/index.tsx` | Map with colored markers | ⏳ |
+| `(tabs)/places.tsx` | Scrollable list fallback | ⏳ |
+| `place/[id].tsx` | Check-in UI with emoji buttons | ⏳ |
 
 ---
 
