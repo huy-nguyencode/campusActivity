@@ -80,8 +80,8 @@ app/
 | `index.tsx` | Entry redirect based on permission | ✅ |
 | `(auth)/welcome.tsx` | Request location permission | ✅ |
 | `(tabs)/_layout.tsx` | Tab navigator (Map + Places) | ✅ |
-| `(tabs)/index.tsx` | Map with colored markers | ⏳ |
-| `(tabs)/places.tsx` | Scrollable list fallback | ⏳ |
+| `(tabs)/index.tsx` | Map with colored markers | ✅ |
+| `(tabs)/places.tsx` | FlatList with place cards | ✅ |
 | `place/[id].tsx` | Check-in UI with emoji buttons | ⏳ |
 
 ---
