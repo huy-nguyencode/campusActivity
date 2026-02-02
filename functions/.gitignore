@@ -1,0 +1,11 @@
+# Compiled JavaScript files
+lib/
+
+# Node.js dependencies
+node_modules/
+
+# Local secrets
+*.local
+
+# Firebase config (if sensitive)
+.runtimeconfig.json
