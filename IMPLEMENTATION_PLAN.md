@@ -1,4 +1,4 @@
-# Campus Pulse MVP - Implementation Plan
+# Campus Spots MVP - Implementation Plan
 
 ## Overview
 Build a privacy-focused mobile app showing real-time crowd levels at campus locations. Users check in anonymously, and the app aggregates data to show color-coded busyness indicators.
@@ -41,6 +41,7 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 | `services/checkin.ts` | Submit check-ins, manage cooldowns | ✅ |
 | `services/places.ts` | Firestore real-time subscription for places | ✅ |
 | `services/proximity.ts` | Calculate distance to POIs, find nearby places | ✅ |
+| `services/admin.ts` | Admin check + override management | ✅ |
 
 ---
 
@@ -53,6 +54,7 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 | `hooks/usePlaces.ts` | Real-time places subscription | ✅ |
 | `hooks/useProximity.ts` | Combine location + places for nearby detection | ✅ |
 | `hooks/useCheckIn.ts` | Check-in submission with cooldown state | ✅ |
+| `hooks/useAdmin.ts` | Admin status check | ✅ |
 
 ---
 
@@ -61,16 +63,16 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 ### Structure
 ```
 app/
-├── _layout.tsx           # Root layout with AuthProvider
+├── _layout.tsx           # Root layout with font loading + auth
 ├── index.tsx             # Entry - redirect based on auth/permission
 ├── (auth)/
 │   └── welcome.tsx       # Location permission request
 ├── (tabs)/
-│   ├── _layout.tsx       # Tab navigator (2 tabs)
+│   ├── _layout.tsx       # Tab navigator (Map + Places)
 │   ├── index.tsx         # Map view with POI markers
-│   └── places.tsx        # Manual place picker list
+│   └── places.tsx        # Place list view
 └── place/
-    └── [id].tsx          # Check-in modal (emoji buttons)
+    └── [id].tsx          # Place detail + check-in
 ```
 
 ### Screen Details
@@ -90,11 +92,14 @@ app/
 
 | Component | Location | Purpose | Status |
 |-----------|----------|---------|--------|
-| `PlaceMarker` | `components/map/` | Colored marker with callout | ✅ |
+| `PlaceMarker` | `components/map/` | Place-type icon marker with callout | ✅ |
 | `CheckInButtons` | `components/checkin/` | 3 emoji buttons with haptics | ✅ |
 | `CooldownTimer` | `components/checkin/` | Auto-updating countdown | ✅ |
 | `StaleIndicator` | `components/checkin/` | "Data may be stale" badge | ✅ |
 | `PlaceCard` | `components/places/` | List item with busyness color | ✅ |
+| `FloatingTabBar` | `components/navigation/` | Custom floating pill tab bar | ✅ |
+| `AdminOverridePanel` | `components/admin/` | Admin busy level override | ✅ |
+| `ErrorBoundary` | `components/` | App-wide error boundary | ✅ |
 
 ---
 
@@ -102,7 +107,7 @@ app/
 
 Created `functions/` directory with Firebase Functions:
 
-**aggregateBusyPercent.ts** - Scheduled every 5 minutes: ✅
+**aggregateBusyPercent** - Scheduled every 5 minutes: ✅
 1. Load check-ins from last 90 minutes
 2. Apply exponential decay (30-min half-life)
 3. Calculate weighted average per place
@@ -124,42 +129,64 @@ Created `functions/` directory with Firebase Functions:
 - `data/places.json` with Temple University campus locations
 - `scripts/seedPlaces.ts` for database initialization
 
-### Final Tasks ✅
-- [x] Add loading states and error handling
-- [x] Add accessibility labels to buttons
-- [x] Component extraction for reusability
-- [ ] Test offline behavior
-- [ ] Test on iOS and Android
+---
+
+## Phase 8: UI/UX Redesign — "Cherry" Theme ✅ COMPLETE
+
+### Design Direction
+- **Tone**: Warm & organic, playful but subtle & refined
+- **Signature colors**: Cherry red (#C41E3A) + warm whites/creams
+- **Typography**: Outfit (display) + Figtree (body)
+- **Motion**: Soft springs (damping: 20, stiffness: 120), gentle press scale (0.97)
+- **Detail**: Cherry-tinted warm shadows on cards (pink cushion effect)
+
+### Changes Made ✅
+| File | Change | Status |
+|------|--------|--------|
+| `constants/theme.ts` | Full rewrite — cherry palette, Outfit+Figtree fonts, warm shadows, softer animation | ✅ |
+| `app/_layout.tsx` | Swapped Quicksand/Nunito for Outfit/Figtree font loading | ✅ |
+| `app/(auth)/welcome.tsx` | Cherry-cream gradient, 700ms animations, 250ms stagger | ✅ |
+| `app/place/[id].tsx` | Softer animation stagger (200ms gaps), cherry hero gradient | ✅ |
+| `components/places/PlaceCard.tsx` | Cherry-tinted warm shadows (SHADOWS.warm) | ✅ |
+| `components/map/PlaceMarker.tsx` | Place-type icons instead of busyness emoji, white pin bg | ✅ |
+| `components/checkin/CooldownTimer.tsx` | Gentler pulse (1.03 scale, 1200ms cycle) | ✅ |
+| `components/checkin/CheckInButtons.tsx` | Updated comments for cherry aesthetic | ✅ |
+| `components/ErrorBoundary.tsx` | Fixed BORDER_RADIUS → RADIUS, SPACING key bugs | ✅ |
+| `types/index.ts` | Fixed PlaceType to match Firestore data (lowercase with spaces) | ✅ |
+
+### Dependencies Changed ✅
+- **Added**: `@expo-google-fonts/outfit`, `@expo-google-fonts/figtree`
+- **Removed**: `@expo-google-fonts/quicksand`, `@expo-google-fonts/nunito`
 
 ---
 
-## Implementation Order (COMPLETED)
+## Remaining Work
 
-1. ✅ **Setup** - Dependencies, Firebase config, types, constants
-2. ✅ **Services** - auth → location → places → proximity → checkin
-3. ✅ **Hooks** - useAuth → useLocation → usePlaces → useProximity
-4. ✅ **Screens** - _layout → welcome → tabs/index (map) → place/[id]
-5. ✅ **Components** - PlaceMarker → CheckInButtons → CooldownTimer
-6. ✅ **Backend** - Cloud Function → Firestore rules → seed POI data
-7. ✅ **Polish** - Error handling, loading states, accessibility
+### Must-Do Before Launch
+- [ ] **Deploy Cloud Function** — `firebase deploy --only functions --project campusactivity-ec1f2`
+- [ ] **Deploy Firestore rules** — `firebase deploy --only firestore:rules --project campusactivity-ec1f2`
+- [ ] **Deploy Firestore indexes** — `firebase deploy --only firestore:indexes --project campusactivity-ec1f2`
+- [ ] **Test on iOS device/simulator** — verify fonts load, map renders, check-in flow works end-to-end
+- [ ] **Test on Android device/emulator** — verify shadows (elevation), map markers, haptics
+- [ ] **Test offline behavior** — cached data shows, queued check-ins sync when reconnected
+- [ ] **Test check-in flow end-to-end** — submit check-in → cloud function runs → busyPercent updates → UI reflects change
+
+### Nice-to-Have / Future
+- [ ] Push notifications for crowd level changes
+- [ ] Historical busy trends (heatmap by hour/day)
+- [ ] User favorites / pinned places
+- [ ] Search / filter on places list
+- [ ] Onboarding tutorial screens
+- [ ] App Store / Play Store submission (icons, screenshots, metadata)
 
 ---
 
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| `CLAUDE.md` | Instructions for AI assistance |
-| `IMPLEMENTATION_PLAN.md` | This file - project roadmap |
-| `SPEC.md` | Technical specification for junior engineers |
-
----
-
-## Key Files Created
+## Key Files
 
 ### Configuration
 - `config/firebase.ts` - Firebase initialization
 - `constants/config.ts` - App-wide constants
+- `constants/theme.ts` - Cherry design system tokens
 - `firebase.json` - Firebase project config
 - `firestore.rules` - Security rules
 - `firestore.indexes.json` - Database indexes
@@ -174,6 +201,7 @@ Created `functions/` directory with Firebase Functions:
 - `services/places.ts` - Firestore operations
 - `services/checkin.ts` - Check-in logic
 - `services/proximity.ts` - Distance detection
+- `services/admin.ts` - Admin override management
 
 ### Hooks
 - `hooks/useAuth.ts` - Auth state management
@@ -181,6 +209,7 @@ Created `functions/` directory with Firebase Functions:
 - `hooks/usePlaces.ts` - Real-time places
 - `hooks/useProximity.ts` - Nearby detection
 - `hooks/useCheckIn.ts` - Check-in with cooldown
+- `hooks/useAdmin.ts` - Admin status check
 
 ### Components
 - `components/checkin/CheckInButtons.tsx`
@@ -188,6 +217,9 @@ Created `functions/` directory with Firebase Functions:
 - `components/checkin/StaleIndicator.tsx`
 - `components/map/PlaceMarker.tsx`
 - `components/places/PlaceCard.tsx`
+- `components/navigation/FloatingTabBar.tsx`
+- `components/admin/AdminOverridePanel.tsx`
+- `components/ErrorBoundary.tsx`
 
 ### Screens
 - `app/_layout.tsx` - Root layout
@@ -210,14 +242,15 @@ Created `functions/` directory with Firebase Functions:
 ### Manual Testing Checklist
 - [ ] App loads and signs in anonymously
 - [ ] Location permission prompt appears on welcome screen
-- [ ] Map shows all POI markers with correct colors
-- [ ] Markers update in real-time when busyPercent changes
+- [ ] Map shows all POI markers with correct place-type icons
+- [ ] Markers show busyness in callout on tap
 - [ ] Check-in buttons appear when within 3m of a place
 - [ ] Buttons disabled when GPS accuracy > 10m
 - [ ] Check-in submission shows success feedback
 - [ ] Cooldown timer appears (90 min countdown)
 - [ ] Cannot check in again until cooldown expires
-- [ ] Manual place picker works when location denied
+- [ ] Places list shows correct emoji for each place type
+- [ ] Pull-to-refresh works on places list
 - [ ] App works offline (shows cached data)
 - [ ] Queued check-ins sync when back online
 
@@ -229,11 +262,12 @@ npm run android        # Test on Android emulator
 npm run lint           # Run ESLint
 
 # Firebase
-firebase emulators:start    # Start local emulators
-firebase deploy             # Deploy to production
-npx ts-node scripts/seedPlaces.ts  # Seed database
+firebase deploy --only functions --project campusactivity-ec1f2
+firebase deploy --only firestore:rules --project campusactivity-ec1f2
+firebase deploy --only firestore:indexes --project campusactivity-ec1f2
 ```
 
 ---
 
 *Implementation completed: February 2026*
+*Cherry theme redesign: February 2026*
