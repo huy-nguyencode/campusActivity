@@ -1,5 +1,5 @@
 // config/firebase.ts
-// Firebase configuration and initialization for Campus Pulse
+// Firebase configuration and initialization for Campus Spots
 //
 // LEARNING POINT: We use the modular Firebase JS SDK (v9+) which supports
 // "tree-shaking" - only the code you actually import gets bundled into your

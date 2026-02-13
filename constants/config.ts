@@ -27,11 +27,9 @@ export const CONFIG = {
     },
 } as const;
 
-export const BUSY_COLORS = {
-    GREEN: '#22C55E',
-    YELLOW: '#EAB308',
-    RED: '#EF4444',
-} as const;
+// Re-export busy colors from theme for consistency
+// This maintains backward compatibility while using the new design system
+export { BUSY_COLORS } from './theme';
 
 
 //emoji icons for busyness levels

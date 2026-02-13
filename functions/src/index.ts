@@ -1,5 +1,5 @@
 /**
- * Firebase Cloud Functions for Campus Pulse
+ * Firebase Cloud Functions for Campus Spots
  *
  * LEARNING POINT: Why Cloud Functions?
  *
@@ -207,6 +207,14 @@ export const aggregateBusyPercent = onSchedule(
 
             placesSnapshot.forEach((placeDoc) => {
                 const placeId = placeDoc.id;
+
+                // Skip places with active admin overrides — their busyPercent
+                // is manually controlled and shouldn't be recomputed.
+                if (placeDoc.data().adminOverride?.active === true) {
+                    console.log(`Place ${placeId}: admin override active, skipping`);
+                    return;
+                }
+
                 const placeCheckIns = checkInsByPlace.get(placeId) || [];
                 const busyPercent = calculateBusyPercent(placeCheckIns, now);
 

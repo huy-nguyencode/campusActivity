@@ -1,56 +1,35 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { CONFIG } from '@/constants/config';
+import {
+    COLORS,
+    FONTS,
+    FONT_SIZES,
+    SPACING,
+    RADIUS,
+} from '@/constants/theme';
 
-/**
- * LEARNING POINT: Simple, Focused Props
- *
- * This component only needs the lastUpdate timestamp.
- * It doesn't need to know:
- * - What place this is for
- * - What the busy percentage is
- * - How to format the "stale" threshold
- *
- * By keeping props minimal, the component stays flexible and reusable.
- */
 interface StaleIndicatorProps {
-    /** When the data was last updated */
     lastUpdate: Date | null;
 }
 
 /**
  * StaleIndicator - Shows warning when crowd data might be outdated
  *
- * LEARNING POINT: User Trust and Data Quality
+ * LEARNING POINT: Visual Hierarchy in Warnings
  *
- * Users need to know when data might not be reliable. This is crucial for:
- * 1. Setting expectations - stale data might not reflect current reality
- * 2. Building trust - honest apps acknowledge their limitations
- * 3. Encouraging engagement - if data is stale, user's check-in helps!
- *
- * The threshold is configurable via CONFIG.STALE_CROWD_THRESHOLD.
+ * Warning indicators need to be noticeable but not alarming.
+ * Using amber/yellow signals "caution" without the urgency of red.
+ * The pill shape makes it feel like a friendly badge, not an error.
  */
 export function StaleIndicator({ lastUpdate }: StaleIndicatorProps) {
-    /**
-     * LEARNING POINT: Early Returns for Cleaner Code
-     *
-     * Instead of nesting conditions:
-     *   if (lastUpdate) {
-     *     if (isStale) {
-     *       return <component>;
-     *     }
-     *   }
-     *   return null;
-     *
-     * We use early returns to handle edge cases first, keeping the
-     * "happy path" at the top level. This is called "guard clauses".
-     */
-
     // No timestamp means no data yet
     if (!lastUpdate) {
         return (
-            <View style={styles.container}>
-                <Text style={styles.icon}>❓</Text>
-                <Text style={styles.text}>No recent data available</Text>
+            <View style={styles.noDataContainer}>
+                <View style={styles.iconWrapper}>
+                    <Text style={styles.icon}>❓</Text>
+                </View>
+                <Text style={styles.noDataText}>No recent data available</Text>
             </View>
         );
     }
@@ -64,30 +43,22 @@ export function StaleIndicator({ lastUpdate }: StaleIndicatorProps) {
         return null;
     }
 
-    // Calculate how long ago in human-readable format
     const minutesAgo = Math.floor(timeSinceUpdate / (60 * 1000));
     const timeAgoText = formatTimeAgo(minutesAgo);
 
     return (
         <View style={styles.container}>
-            <Text style={styles.icon}>⚠️</Text>
-            <View style={styles.textContainer}>
-                <Text style={styles.text}>Data may be outdated</Text>
-                <Text style={styles.subtext}>Last updated {timeAgoText}</Text>
+            <View style={styles.pill}>
+                <Text style={styles.pillIcon}>⏰</Text>
+                <View style={styles.pillContent}>
+                    <Text style={styles.pillTitle}>Data may be outdated</Text>
+                    <Text style={styles.pillSubtitle}>Last updated {timeAgoText}</Text>
+                </View>
             </View>
         </View>
     );
 }
 
-/**
- * LEARNING POINT: Human-Readable Time Formatting
- *
- * Users understand "2 hours ago" better than "120 minutes ago" or a timestamp.
- * Good UX means presenting data in the most intuitive format.
- *
- * This is a pure function - same input always gives same output.
- * Pure functions are easy to test and have no hidden dependencies.
- */
 function formatTimeAgo(minutes: number): string {
     if (minutes < 60) {
         return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
@@ -104,29 +75,61 @@ function formatTimeAgo(minutes: number): string {
 
 const styles = StyleSheet.create({
     container: {
+        paddingHorizontal: SPACING[5],
+        paddingVertical: SPACING[2],
+    },
+    pill: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FEF2F2', // Red-50
-        padding: 12,
-        borderRadius: 8,
-        marginHorizontal: 20,
-        marginVertical: 8,
+        backgroundColor: COLORS.accent[100],
+        paddingHorizontal: SPACING[4],
+        paddingVertical: SPACING[3],
+        borderRadius: RADIUS.full,
+        borderWidth: 1,
+        borderColor: COLORS.accent[200],
     },
-    icon: {
+    pillIcon: {
         fontSize: 20,
-        marginRight: 8,
+        marginRight: SPACING[2],
     },
-    textContainer: {
+    pillContent: {
         flex: 1,
     },
-    text: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#991B1B', // Red-800
+    pillTitle: {
+        fontSize: FONT_SIZES.sm,
+        fontFamily: FONTS.body.semiBold,
+        color: COLORS.accent[800],
     },
-    subtext: {
-        fontSize: 12,
-        color: '#B91C1C', // Red-700
-        marginTop: 2,
+    pillSubtitle: {
+        fontSize: FONT_SIZES.xs,
+        fontFamily: FONTS.body.regular,
+        color: COLORS.accent[600],
+        marginTop: 1,
+    },
+    noDataContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: SPACING[5],
+        marginVertical: SPACING[2],
+        padding: SPACING[4],
+        backgroundColor: COLORS.neutral[100],
+        borderRadius: RADIUS.lg,
+    },
+    iconWrapper: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: COLORS.neutral[200],
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: SPACING[3],
+    },
+    icon: {
+        fontSize: 18,
+    },
+    noDataText: {
+        fontSize: FONT_SIZES.sm,
+        fontFamily: FONTS.body.semiBold,
+        color: COLORS.neutral[600],
     },
 });

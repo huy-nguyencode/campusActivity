@@ -1,6 +1,6 @@
-# Campus Pulse - Technical Specification
+# Campus Spots - Technical Specification
 
-A comprehensive guide to the Campus Pulse mobile application architecture, patterns, and implementation details. Written for junior engineers learning mobile development.
+A comprehensive guide to the Campus Spots mobile application architecture, patterns, and implementation details. Written for junior engineers learning mobile development.
 
 ---
 
@@ -23,9 +23,9 @@ A comprehensive guide to the Campus Pulse mobile application architecture, patte
 
 ## Application Overview
 
-### What Is Campus Pulse?
+### What Is Campus Spots?
 
-Campus Pulse is a privacy-focused mobile app that shows real-time crowd levels at campus locations. Users anonymously check in to report how busy a location is, and the app aggregates this data to display color-coded busyness indicators.
+Campus Spots is a privacy-focused mobile app that shows real-time crowd levels at campus locations. Users anonymously check in to report how busy a location is, and the app aggregates this data to display color-coded busyness indicators.
 
 ### Key Features
 
@@ -60,7 +60,7 @@ Backend:
 
 ### The Layered Architecture Pattern
 
-Campus Pulse follows a **layered architecture** where each layer has a specific responsibility. Data flows down through layers, and each layer only talks to the layer directly below it.
+Campus Spots follows a **layered architecture** where each layer has a specific responsibility. Data flows down through layers, and each layer only talks to the layer directly below it.
 
 ```
 ┌─────────────────────────────────────┐
@@ -526,7 +526,7 @@ Does the state persist across sessions?
 └── NO → Use React state (UI state like loading)
 ```
 
-### State Types in Campus Pulse
+### State Types in Campus Spots
 
 | State Type | Storage | Example |
 |------------|---------|---------|
@@ -808,7 +808,7 @@ export function Xxx({ prop }: XxxProps) {
 
 ## Summary
 
-Campus Pulse demonstrates modern React Native development with:
+Campus Spots demonstrates modern React Native development with:
 
 1. **TypeScript** for type safety and better developer experience
 2. **Layered Architecture** separating UI, logic, and data

@@ -1,9 +1,27 @@
 // types/index.ts
-// Central type definitions for Campus Pulse
+// Central type definitions for Campus Spots
 //
 // LEARNING POINT: TypeScript interfaces define the "shape" of your data.
 // They catch errors at compile time (before your app runs) and provide
 // autocomplete in your editor. This makes refactoring safer and faster.
+
+/**
+ * Admin override for manually setting a place's busy level.
+ *
+ * LEARNING POINT: Separation of Concerns via Types
+ *
+ * By making this its own interface (instead of inline fields on Place),
+ * we get a clean "override object" that can be null when inactive. This
+ * pattern is called a "value object" — a small, self-contained type that
+ * groups related fields. It makes it easy to check `if (place.adminOverride)`
+ * rather than testing multiple fields individually.
+ */
+export interface AdminOverride {
+  active: boolean;        // Whether this override is currently in effect
+  busyPercent: number;    // The admin-set busy level (0-100)
+  setBy: string;          // UID of the admin who set it
+  setAt: Date | null;     // When the override was applied
+}
 
 /**
  * A campus Point of Interest (POI)
@@ -14,8 +32,9 @@ export interface Place {
   name: string;
   type: PlaceType;
   location: GeoPoint;
-  busyPercent: number;     // 0-100, computed by Cloud Function
-  lastUpdate: Date | null; // When busyPercent was last calculated
+  busyPercent: number;            // 0-100, computed by Cloud Function
+  lastUpdate: Date | null;        // When busyPercent was last calculated
+  adminOverride: AdminOverride | null; // Manual override set by admin, null if none
 }
 
 /**
@@ -23,7 +42,7 @@ export interface Place {
  * LEARNING POINT: Union types restrict values to specific strings.
  * If you try to use 'restaurant' (not in the list), TypeScript errors.
  */
-export type PlaceType = 'dining hall' | 'library' | 'gym' | 'cafe' | 'food truck';
+export type PlaceType = 'dining hall' | 'library' | 'gym' | 'cafe' | 'food truck' | 'study';
 
 /**
  * Geographic coordinates

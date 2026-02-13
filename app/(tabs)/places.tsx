@@ -10,28 +10,28 @@
  * 3. Handle cases where map isn't practical (poor location, indoor use)
  */
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState, useCallback } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePlaces } from '@/hooks/usePlaces';
 import { Place } from '@/types';
 import { PlaceCard } from '@/components/places/PlaceCard';
+import {
+    COLORS,
+    FONTS,
+    FONT_SIZES,
+    SPACING,
+    RADIUS,
+    SHADOWS,
+    SEMANTIC_COLORS,
+} from '@/constants/theme';
 
 export default function PlacesScreen() {
     const { places, isLoading, error, refresh } = usePlaces();
     const [refreshing, setRefreshing] = useState(false);
+    const insets = useSafeAreaInsets();
 
-    /**
-     * LEARNING POINT: Pull-to-Refresh Pattern
-     *
-     * Pull-to-refresh is a mobile UX convention that lets users
-     * manually update data by dragging down on a list.
-     *
-     * Implementation:
-     * 1. Track refreshing state
-     * 2. Pass RefreshControl to FlatList
-     * 3. Call data refresh function
-     * 4. Reset refreshing state when done
-     */
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
         try {
@@ -41,17 +41,16 @@ export default function PlacesScreen() {
         }
     }, [refresh]);
 
-    /**
-     * LEARNING POINT: Early Returns for Edge Cases
-     *
-     * Handle loading and error states before the main render.
-     * This keeps the main render clean and focused on the "happy path".
-     */
     if (isLoading && !refreshing) {
         return (
             <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <Text style={styles.loadingEmoji}>📍</Text>
                 <Text style={styles.loadingText}>Loading places...</Text>
+                <ActivityIndicator
+                    size="small"
+                    color={COLORS.primary[500]}
+                    style={styles.loadingSpinner}
+                />
             </View>
         );
     }
@@ -66,15 +65,6 @@ export default function PlacesScreen() {
         );
     }
 
-    /**
-     * LEARNING POINT: Render Functions for FlatList
-     *
-     * FlatList's renderItem receives { item, index, separators }.
-     * We destructure just what we need: { item }.
-     *
-     * This function is called for each item in the list. Keep it light!
-     * Heavy computations should happen in the data layer, not here.
-     */
     const renderPlace = ({ item }: { item: Place }) => (
         <PlaceCard
             place={item}
@@ -82,140 +72,155 @@ export default function PlacesScreen() {
         />
     );
 
-    /**
-     * LEARNING POINT: FlatList vs ScrollView
-     *
-     * FlatList is preferred for lists because:
-     * 1. Virtualization - only renders visible items
-     * 2. Memory efficient - recycles item views
-     * 3. Built-in features - pull-to-refresh, separators, headers
-     *
-     * ScrollView renders ALL children at once - bad for long lists.
-     * Use ScrollView only for short, fixed content.
-     */
     return (
-        <FlatList
-            data={places}
-            keyExtractor={(item) => item.id}
-            renderItem={renderPlace}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-            /**
-             * LEARNING POINT: RefreshControl
-             *
-             * RefreshControl provides the pull-to-refresh UI.
-             * It automatically shows a spinner when refreshing is true.
-             * onRefresh is called when the user pulls down far enough.
-             */
-            refreshControl={
-                <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={handleRefresh}
-                    tintColor="#007AFF"
-                    colors={['#007AFF']} // Android
-                />
-            }
-            /**
-             * LEARNING POINT: Empty State Handling
-             *
-             * ListEmptyComponent shows when data array is empty.
-             * Always provide feedback - an empty screen is confusing.
-             * Tell users WHY it's empty and WHAT they can do.
-             */
-            ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyIcon}>🏫</Text>
-                    <Text style={styles.emptyText}>No places found</Text>
-                    <Text style={styles.emptyHint}>
-                        Places will appear here once they're added to the system
-                    </Text>
-                </View>
-            }
-            /**
-             * LEARNING POINT: List Header
-             *
-             * ListHeaderComponent renders above all items.
-             * Useful for titles, filters, or search bars.
-             * It scrolls with the list (unlike sticky headers).
-             */
-            ListHeaderComponent={
-                places.length > 0 ? (
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Campus Locations</Text>
-                        <Text style={styles.headerSubtitle}>
-                            Tap a place to see details and check in
-                        </Text>
+        /**
+         * LEARNING POINT: Gradient Background on List Screens
+         *
+         * Wrapping a FlatList in a LinearGradient gives the entire screen
+         * a warm, living feel. The gradient (cream → neutral-50) is subtle
+         * enough not to distract from the cards but adds warmth vs. a flat
+         * background color. The gradient acts as a "canvas" for the floating cards.
+         */
+        <LinearGradient
+            colors={[SEMANTIC_COLORS.background.warm, COLORS.neutral[50]]}
+            style={styles.container}
+        >
+            <FlatList
+                data={places}
+                keyExtractor={(item) => item.id}
+                renderItem={renderPlace}
+                contentContainerStyle={[styles.listContainer, { paddingTop: insets.top + SPACING[4] }]}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor={COLORS.primary[500]}
+                        colors={[COLORS.primary[500]]}
+                    />
+                }
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <View style={styles.emptyCard}>
+                            <Text style={styles.emptyIcon}>🏫</Text>
+                            <Text style={styles.emptyText}>No places yet</Text>
+                            <Text style={styles.emptyHint}>
+                                Campus spots will appear here once they're added. Check back soon!
+                            </Text>
+                        </View>
                     </View>
-                ) : null
-            }
-        />
+                }
+                ListHeaderComponent={
+                    places.length > 0 ? (
+                        <View style={styles.header}>
+                            <View style={styles.headerTitleRow}>
+                                <Text style={styles.headerTitle}>Campus Locations</Text>
+                            </View>
+                            <Text style={styles.headerSubtitle}>
+                                Tap a place to see details and check in
+                            </Text>
+                        </View>
+                    ) : null
+                }
+            />
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F9FAFB',
-        padding: 20,
+        backgroundColor: SEMANTIC_COLORS.background.warm,
+        padding: SPACING[6],
+    },
+    loadingEmoji: {
+        fontSize: 36,
+        marginBottom: SPACING[4],
     },
     loadingText: {
-        marginTop: 12,
-        fontSize: 16,
-        color: '#6B7280',
+        fontSize: FONT_SIZES.lg,
+        fontFamily: FONTS.display.semiBold,
+        color: SEMANTIC_COLORS.text.primary,
+        marginBottom: SPACING[3],
+    },
+    loadingSpinner: {
+        marginTop: SPACING[2],
     },
     errorIcon: {
-        fontSize: 48,
-        marginBottom: 16,
+        fontSize: 36,
+        marginBottom: SPACING[4],
     },
     errorText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#1F2937',
-        marginBottom: 8,
+        fontSize: FONT_SIZES.lg,
+        fontFamily: FONTS.body.semiBold,
+        color: SEMANTIC_COLORS.text.primary,
+        marginBottom: SPACING[2],
     },
     errorHint: {
-        fontSize: 14,
-        color: '#6B7280',
+        fontSize: FONT_SIZES.sm,
+        fontFamily: FONTS.body.regular,
+        color: SEMANTIC_COLORS.text.secondary,
     },
     listContainer: {
-        padding: 16,
-        paddingBottom: 32,
+        paddingHorizontal: SPACING[4],
+        paddingBottom: SPACING[8],
     },
     header: {
-        marginBottom: 16,
+        marginBottom: SPACING[5],
+    },
+    headerTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: SPACING[3],
+        marginBottom: SPACING[1],
     },
     headerTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#1F2937',
-        marginBottom: 4,
+        fontSize: FONT_SIZES['2xl'],
+        fontFamily: FONTS.display.bold,
+        color: SEMANTIC_COLORS.text.primary,
+
     },
     headerSubtitle: {
-        fontSize: 14,
-        color: '#6B7280',
+        fontSize: FONT_SIZES.sm,
+        fontFamily: FONTS.body.regular,
+        color: SEMANTIC_COLORS.text.secondary,
+        textAlign: 'center',
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 60,
+        paddingVertical: SPACING[12],
+    },
+    emptyCard: {
+        backgroundColor: SEMANTIC_COLORS.background.card,
+        borderRadius: RADIUS.xl,
+        padding: SPACING[6],
+        alignItems: 'center',
+        ...SHADOWS.warm,
     },
     emptyIcon: {
         fontSize: 48,
-        marginBottom: 16,
+        marginBottom: SPACING[4],
     },
     emptyText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#1F2937',
-        marginBottom: 8,
+        fontSize: FONT_SIZES.xl,
+        fontFamily: FONTS.display.bold,
+        color: SEMANTIC_COLORS.text.primary,
+        marginBottom: SPACING[2],
     },
     emptyHint: {
-        fontSize: 14,
-        color: '#6B7280',
+        fontSize: FONT_SIZES.md,
+        fontFamily: FONTS.body.regular,
+        color: SEMANTIC_COLORS.text.secondary,
         textAlign: 'center',
-        paddingHorizontal: 20,
+        paddingHorizontal: SPACING[4],
+        lineHeight: FONT_SIZES.md * 1.5,
     },
 });
