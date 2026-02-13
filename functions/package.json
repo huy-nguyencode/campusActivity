@@ -1,6 +1,6 @@
 {
-  "name": "campus-pulse-functions",
-  "description": "Cloud Functions for Campus Pulse app",
+  "name": "campus-spots-functions",
+  "description": "Cloud Functions for Campus Spots app",
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",

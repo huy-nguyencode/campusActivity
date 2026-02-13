@@ -1,5 +1,5 @@
 /**
- * Proximity service for Campus Pulse.
+ * Proximity service for Campus Spots.
  *
  * Calculates distances between user location and campus places,
  * determines which places are nearby (within check-in radius).

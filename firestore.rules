@@ -1,5 +1,5 @@
 /**
- * Firestore Security Rules for Campus Pulse
+ * Firestore Security Rules for Campus Spots
  *
  * LEARNING POINT: Security Rules Are Essential
  *
@@ -28,20 +28,45 @@ service cloud.firestore {
      *
      * Business logic:
      * - Anyone can read places (needed to show on map)
-     * - Only Cloud Functions can write (busyPercent updates)
+     * - Only Cloud Functions can write most fields (busyPercent updates)
+     * - Admins can update busyPercent and adminOverride (for manual overrides)
      *
-     * LEARNING POINT: Principle of Least Privilege
+     * LEARNING POINT: Granular Write Rules
      *
-     * Give the minimum permissions necessary. Clients only need to
-     * READ places, so we don't allow write, update, or delete.
-     * This prevents:
-     * - Users creating fake places
-     * - Users manipulating busy percentages
-     * - Accidental data corruption
+     * Instead of a blanket `allow write: if false`, we split into
+     * create, delete, and update. This lets us allow admin updates
+     * while still preventing anyone from creating or deleting places.
+     *
+     * LEARNING POINT: onlyAffects() Pattern
+     *
+     * The `onlyAffects` helper ensures that even an admin can only
+     * modify the specific fields needed for overrides. This is called
+     * "field-level security" — even with update permission, the admin
+     * can't change the place name, location, or type.
      */
     match /places/{placeId} {
       allow read: if true;
-      allow write: if false; // Only Cloud Functions (admin SDK) can write
+      allow create, delete: if false;
+      allow update: if isAdmin()
+                    && onlyAffects(['busyPercent', 'adminOverride']);
+    }
+
+    /**
+     * CONFIG COLLECTION
+     *
+     * Stores app-wide configuration (e.g., admin UIDs list).
+     * Readable by authenticated users (needed to check admin status).
+     * Only editable via Firebase Console (no client writes).
+     *
+     * LEARNING POINT: Console-Only Collections
+     *
+     * Some data should never be written by clients. By setting
+     * write to false, only Firebase Console and Admin SDK can modify
+     * this data. The client can still read it to check permissions.
+     */
+    match /config/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
     }
 
     /**
@@ -90,6 +115,39 @@ service cloud.firestore {
     // Check if the request is from an authenticated user
     function isAuthenticated() {
       return request.auth != null;
+    }
+
+    /**
+     * Check if the authenticated user is an admin.
+     *
+     * LEARNING POINT: Cross-Document Reads with get()
+     *
+     * Firestore rules can read other documents using get(). This costs
+     * one document read per rule evaluation. The result is cached for
+     * the duration of the request, so multiple calls to isAdmin() in
+     * the same rule evaluation only cost one read.
+     *
+     * Note: get() returns null if the document doesn't exist, so we
+     * guard with exists() first to prevent null reference errors.
+     */
+    function isAdmin() {
+      return isAuthenticated()
+          && exists(/databases/$(database)/documents/config/admins)
+          && request.auth.uid in get(/databases/$(database)/documents/config/admins).data.uids;
+    }
+
+    /**
+     * Ensures an update only modifies the specified fields.
+     *
+     * LEARNING POINT: Field-Level Security
+     *
+     * request.resource.data contains ALL fields the document will have
+     * after the update. resource.data contains the current fields.
+     * By computing the diff (affectedKeys), we can verify that only
+     * the allowed fields were changed.
+     */
+    function onlyAffects(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
     // Validate check-in document structure and values
