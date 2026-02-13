@@ -13,11 +13,7 @@ import { initializeApp } from 'firebase/app';
 import { initializeAuth } from 'firebase/auth';
 // @ts-ignore - Firebase RN-specific export not in main types
 import { getReactNativePersistence } from '@firebase/auth/dist/rn/index.js';
-import {
-  initializeFirestore,
-  persistentLocalCache,
-  persistentSingleTabManager
-} from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Your Firebase project configuration
@@ -47,18 +43,14 @@ export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage)
 });
 
-// Initialize Firestore with offline persistence
-// LEARNING POINT: persistentLocalCache enables "offline-first" behavior:
-// 1. Reads come from local cache first (fast!)
-// 2. Writes are queued locally and sync when online
-// 3. The app works without network connectivity
+// Initialize Firestore with named database
+// LEARNING POINT: Firebase supports multiple named databases per project.
+// If you created a database with a custom name (like "default") instead of
+// using the implicit (default) database, you must specify the database ID
+// as the second argument to getFirestore.
 //
-// persistentSingleTabManager is used for React Native since we only have
-// one "tab" (the app itself). On web, you'd use persistentMultipleTabManager.
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentSingleTabManager(undefined)
-  })
-});
+// The implicit default database has no name (accessed with just getFirestore(app))
+// Named databases require: getFirestore(app, 'database-name')
+export const db = getFirestore(app, 'default');
 
 export default app;

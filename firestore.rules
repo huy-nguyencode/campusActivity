@@ -1,0 +1,139 @@
+/**
+ * Firestore Security Rules for Campus Pulse
+ *
+ * LEARNING POINT: Security Rules Are Essential
+ *
+ * Firestore rules are your last line of defense. Even if your client code
+ * is perfect, malicious users can bypass it with direct API calls.
+ * Rules run on Firebase's servers and cannot be circumvented.
+ *
+ * Golden Rule: Never trust the client. Always validate on the server.
+ *
+ * LEARNING POINT: Rules Syntax
+ *
+ * Rules use a path-based syntax:
+ * - match /collection/{docId} - matches any document in collection
+ * - request.auth - the authenticated user (null if not signed in)
+ * - request.resource.data - the data being written
+ * - resource.data - the existing data (for updates/deletes)
+ * - get() / exists() - read other documents for validation
+ */
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * PLACES COLLECTION
+     *
+     * Business logic:
+     * - Anyone can read places (needed to show on map)
+     * - Only Cloud Functions can write (busyPercent updates)
+     *
+     * LEARNING POINT: Principle of Least Privilege
+     *
+     * Give the minimum permissions necessary. Clients only need to
+     * READ places, so we don't allow write, update, or delete.
+     * This prevents:
+     * - Users creating fake places
+     * - Users manipulating busy percentages
+     * - Accidental data corruption
+     */
+    match /places/{placeId} {
+      allow read: if true;
+      allow write: if false; // Only Cloud Functions (admin SDK) can write
+    }
+
+    /**
+     * CHECKINS COLLECTION
+     *
+     * Business logic:
+     * - Only authenticated users can create check-ins
+     * - Users can only check in as themselves (uid must match)
+     * - Validate the data structure
+     * - No updates or deletes (check-ins are immutable)
+     *
+     * LEARNING POINT: Data Validation in Rules
+     *
+     * Validate EVERYTHING:
+     * - Required fields exist
+     * - Field types are correct
+     * - Values are within expected ranges
+     * - References point to real documents
+     *
+     * If validation fails, the write is rejected with permission-denied.
+     */
+    match /checkins/{checkinId} {
+      // Read: Only allow if authenticated (optional, could be false)
+      // We allow read so users could potentially see their own history
+      allow read: if request.auth != null;
+
+      // Create: Authenticated users with valid data
+      allow create: if isAuthenticated()
+                    && isValidCheckIn();
+
+      // No updates or deletes allowed
+      allow update, delete: if false;
+    }
+
+    /**
+     * LEARNING POINT: Helper Functions
+     *
+     * Extract common checks into functions for:
+     * 1. Readability - isAuthenticated() is clearer than request.auth != null
+     * 2. Reusability - use the same check in multiple rules
+     * 3. Maintainability - update logic in one place
+     *
+     * Functions can only return booleans. They cannot modify data.
+     */
+
+    // Check if the request is from an authenticated user
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Validate check-in document structure and values
+    function isValidCheckIn() {
+      let data = request.resource.data;
+
+      // Required fields must exist
+      let hasRequiredFields = data.keys().hasAll(['placeId', 'level', 'timestamp', 'uid']);
+
+      // UID must match the authenticated user (can't check in as someone else)
+      let uidMatches = data.uid == request.auth.uid;
+
+      // Level must be 1, 2, or 3
+      let validLevel = data.level is int && data.level >= 1 && data.level <= 3;
+
+      // PlaceId must be a non-empty string
+      let validPlaceId = data.placeId is string && data.placeId.size() > 0;
+
+      // Timestamp should be a timestamp type
+      let validTimestamp = data.timestamp is timestamp;
+
+      // Optional: Verify the place exists (costs an extra read)
+      // let placeExists = exists(/databases/$(database)/documents/places/$(data.placeId));
+
+      return hasRequiredFields
+          && uidMatches
+          && validLevel
+          && validPlaceId
+          && validTimestamp;
+    }
+
+    /**
+     * LEARNING POINT: Catch-All Rule
+     *
+     * Always deny access to collections you haven't explicitly defined.
+     * This prevents accidental exposure if you add new collections but
+     * forget to add rules for them.
+     *
+     * Some teams prefer explicit deny-all:
+     *   match /{document=**} { allow read, write: if false; }
+     *
+     * But this goes at the END and would override specific rules.
+     * Better to just not have a catch-all and rely on Firestore's
+     * default deny behavior.
+     */
+  }
+}

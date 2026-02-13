@@ -1,0 +1,114 @@
+{
+  "places": [
+    {
+      "id": "johnson-dining",
+      "name": "Johnson & Hardwick Dining",
+      "type": "dining hall",
+      "location": {
+        "latitude": 39.98134,
+        "longitude": -75.15436
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "charles-library",
+      "name": "Charles Library",
+      "type": "library",
+      "location": {
+        "latitude": 39.98215,
+        "longitude": -75.15289
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "irt-gym",
+      "name": "IRT Recreation Center",
+      "type": "gym",
+      "location": {
+        "latitude": 39.98089,
+        "longitude": -75.15612
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "saxbys-cafe",
+      "name": "Saxbys Coffee",
+      "type": "cafe",
+      "location": {
+        "latitude": 39.98156,
+        "longitude": -75.15523
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "morgan-cafe",
+      "name": "Morgan Hall Cafe",
+      "type": "cafe",
+      "location": {
+        "latitude": 39.98267,
+        "longitude": -75.15178
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "tuttleman-food",
+      "name": "Tuttleman Food Court",
+      "type": "dining hall",
+      "location": {
+        "latitude": 39.98045,
+        "longitude": -75.15534
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "tech-center-cafe",
+      "name": "Tech Center Cafe",
+      "type": "cafe",
+      "location": {
+        "latitude": 39.98312,
+        "longitude": -75.15445
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "student-center",
+      "name": "Howard Gittis Student Center",
+      "type": "dining hall",
+      "location": {
+        "latitude": 39.98178,
+        "longitude": -75.15367
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "pearson-mcginnis",
+      "name": "Pearson-McGinnis Gym",
+      "type": "gym",
+      "location": {
+        "latitude": 39.97998,
+        "longitude": -75.15701
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "food-truck-alley",
+      "name": "Food Truck Row",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.98234,
+        "longitude": -75.15312
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    }
+  ]
+}
