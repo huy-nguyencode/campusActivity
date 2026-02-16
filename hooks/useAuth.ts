@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { signInAnon, subscribeToAuthState } from '@/services/auth';
+import { signInAnon, subscribeToAuthState } from '@/services/authService';
 
 /**
  * Custom hook for managing user authentication state.
@@ -33,7 +33,23 @@ export function useAuth() {
             } else {
                 try {
                     setIsLoading(true);
+                    /**
+                     * LEARNING POINT: Belt-and-Suspenders Auth Pattern
+                     *
+                     * signInAnon() triggers onAuthStateChanged, which will
+                     * call this callback again with the new user. So in theory
+                     * we don't need to call setUser here — the listener handles it.
+                     *
+                     * BUT: if the listener fires before this await resolves, or
+                     * if there's a race condition / network hiccup where the
+                     * callback doesn't fire promptly, the app would be stuck on
+                     * a loading spinner forever. Explicitly setting the user here
+                     * is a safety net: if the listener already set it, React
+                     * deduplicates the identical state; if it didn't, we recover.
+                     */
                     const newUser = await signInAnon();
+                    setUser(newUser);
+                    setIsLoading(false);
                 } catch (error) {
                     setError((error as Error).message);
                     setIsLoading(false);

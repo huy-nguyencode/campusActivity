@@ -6,8 +6,8 @@
  */
 
 import { Place, LocationState, ProximityResult} from '@/types';
-import { haversineDistance } from '@/utils/haversine';
-import { CONFIG } from '@/constants/config';
+import { haversineDistance } from '@/utils/geoDistance';
+import { CONFIG } from '@/constants/appConfig';
 
 /**
  * Calculate the proximity of a place to a user's location.

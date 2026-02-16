@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Place, LocationState, ProximityResult } from '@/types';
-import { calculateProximityForAllPlaces, isAccuracyGoodEnough } from '@/services/proximity';
+import { calculateProximityForAllPlaces, isAccuracyGoodEnough } from '@/services/proximityService';
 
 /**
  * Custom hook for calculating proximity between user location and places.

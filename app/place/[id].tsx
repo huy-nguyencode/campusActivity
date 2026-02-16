@@ -25,9 +25,9 @@ import Feather from '@expo/vector-icons/Feather';
 import { useLocation } from '@/hooks/useLocation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCheckIn } from '@/hooks/useCheckIn';
-import { subscribePlace } from '@/services/places';
-import { haversineDistance } from '@/utils/haversine';
-import { CONFIG } from '@/constants/config';
+import { subscribePlace } from '@/services/placesService';
+import { haversineDistance } from '@/utils/geoDistance';
+import { CONFIG } from '@/constants/appConfig';
 import { Place, BusyLevel } from '@/types';
 import { CheckInButtons, CooldownTimer, StaleIndicator } from '@/components/checkin';
 import { AdminOverridePanel } from '@/components/admin/AdminOverridePanel';
@@ -63,7 +63,7 @@ export default function PlaceScreen() {
 
     const { location } = useLocation();
     const { uid } = useAuth();
-    const { checkIn, isOnCooldown, cooldownEndTime, isLoading: checkInLoading } = useCheckIn(id ?? null);
+    const { checkIn, isOnCooldown, cooldownEndTime, isLoading: checkInLoading, refreshCooldown } = useCheckIn(id ?? null);
     const { isAdmin, setOverride, clearOverride } = useAdmin(uid);
     /**
      * LEARNING POINT: Safe Area Insets for Headerless Screens
@@ -145,14 +145,24 @@ export default function PlaceScreen() {
 
     const handleCheckIn = useCallback(async (level: BusyLevel) => {
         const result = await checkIn(level);
-        if (result) {
+        if (result.success) {
             router.back();
         }
+        // Error is already set in the hook's state and shown via the error prop
     }, [checkIn]);
 
+    /**
+     * LEARNING POINT: Completing the Cooldown Lifecycle
+     *
+     * When the CooldownTimer counts down to zero, it fires onComplete.
+     * We must re-check cooldown state here so the UI immediately shows
+     * the check-in buttons again — without requiring navigation away
+     * and back. This closes the loop: check in → cooldown starts →
+     * timer expires → buttons reappear.
+     */
     const handleCooldownComplete = useCallback(() => {
-        // Could refresh state here, but the hook handles it
-    }, []);
+        refreshCooldown();
+    }, [refreshCooldown]);
 
     const backButtonAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: backButtonScale.value }],

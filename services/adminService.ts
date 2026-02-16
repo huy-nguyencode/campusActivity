@@ -28,7 +28,7 @@
 
 import { db } from '@/config/firebase';
 import { doc, getDoc, updateDoc, deleteField, serverTimestamp } from 'firebase/firestore';
-import { getCurrentUserUID } from '@/services/auth';
+import { getCurrentUserUID } from '@/services/authService';
 
 /**
  * Checks whether the currently signed-in user is an admin.
@@ -37,21 +37,30 @@ import { getCurrentUserUID } from '@/services/auth';
  * exists in the `uids` array. Returns false if the document doesn't
  * exist or the user isn't authenticated.
  */
+/**
+ * LEARNING POINT: __DEV__ Guard for Debug Logging
+ *
+ * React Native sets __DEV__ to true in development and false in
+ * production builds. Wrapping debug logs with this guard means:
+ * 1. You get helpful output during development
+ * 2. Sensitive data (admin UIDs) is never logged in production
+ * 3. No manual cleanup needed before shipping
+ *
+ * SECURITY: Without this guard, anyone attaching a debugger to
+ * a production build could see every admin UID in your system.
+ */
 export async function checkIsAdmin(uid: string): Promise<boolean> {
-    console.log('[Admin] Checking UID:', uid);
+    if (__DEV__) console.log('[Admin] Checking UID:', uid);
 
     const adminsRef = doc(db, 'config', 'admins');
     const adminsSnap = await getDoc(adminsRef);
-
-    console.log('[Admin] admins doc exists:', adminsSnap.exists());
 
     if (!adminsSnap.exists()) return false;
 
     const data = adminsSnap.data();
     const uids = data?.uids as string[] | undefined;
 
-    console.log('[Admin] Admin UIDs from Firestore:', uids);
-    console.log('[Admin] Is admin:', Array.isArray(uids) && uids.includes(uid));
+    if (__DEV__) console.log('[Admin] Is admin:', Array.isArray(uids) && uids.includes(uid));
 
     return Array.isArray(uids) && uids.includes(uid);
 }

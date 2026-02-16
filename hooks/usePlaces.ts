@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Place } from '@/types';
-import { subscribePlaces } from '@/services/places';
+import { subscribePlaces } from '@/services/placesService';
 
 /**
  * Custom hook for subscribing to real-time campus places data.

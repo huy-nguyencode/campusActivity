@@ -16,5 +16,5 @@ export default function Index() {
   if (permission === 'undetermined') {
     return <Redirect href="/(auth)/welcome" />;
   }
-  return <Redirect href="/(tabs)" />;
+  return <Redirect href="/(tabs)/map" />;
 }

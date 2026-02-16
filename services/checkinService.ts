@@ -7,10 +7,10 @@
  * @module services/checkin
  */
 import {db} from '@/config/firebase';
-import {collection, addDoc, serverTimestamp, getDoc, doc, Timestamp} from 'firebase/firestore';
+import {collection, addDoc, serverTimestamp, getDoc, setDoc, doc, Timestamp, writeBatch} from 'firebase/firestore';
 import {CheckIn, BusyLevel} from '@/types';
-import { CONFIG } from '@/constants/config';
-import {getCurrentUserUID} from '@/services/auth';
+import { CONFIG } from '@/constants/appConfig';
+import {getCurrentUserUID} from '@/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
@@ -33,53 +33,101 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  *   console.log('Check-in submitted:', checkIn.id);
  * }
  */
-export async function submitCheckin(placeId: string, level: BusyLevel): Promise<CheckIn | null> {
+/**
+ * LEARNING POINT: Result Type Pattern
+ *
+ * Instead of returning null for every failure, we return a discriminated
+ * union that tells the caller WHY it failed. This lets the UI show
+ * specific messages ("you're on cooldown" vs "not authenticated" vs
+ * "network error") instead of a generic "something went wrong."
+ */
+export type CheckInResult =
+    | { success: true; checkIn: CheckIn }
+    | { success: false; reason: 'not_authenticated' | 'on_cooldown' | 'error'; message: string };
+
+export async function submitCheckin(placeId: string, level: BusyLevel): Promise<CheckInResult> {
         //get user uid
-        const uid = await getCurrentUserUID();
-        //if no uid, return null
+        const uid = getCurrentUserUID();
+        //if no uid, return error with reason
         if (!uid) {
-            return null;
+            return { success: false, reason: 'not_authenticated', message: 'You must be signed in to check in.' };
         }
-        //check if cooldown is active
+        //check if cooldown is active (client-side fast check)
         if (await isOnCoolDown(placeId)) {
-            return null;
+            return { success: false, reason: 'on_cooldown', message: 'You recently checked in here. Please wait before checking in again.' };
         }
     try {
-        //add check-in to firestore
-        const checkInRef = await addDoc(collection(db, 'checkins'), {
+        /**
+         * LEARNING POINT: Batched Writes for Atomic Multi-Document Operations
+         *
+         * We need to write TWO documents atomically:
+         * 1. The check-in itself (in 'checkins' collection)
+         * 2. A cooldown lock (in 'cooldowns' collection)
+         *
+         * writeBatch() ensures both writes succeed or both fail.
+         * The Firestore security rule on 'checkins' reads the lock
+         * document to verify cooldown server-side — so even if a
+         * malicious client skips the AsyncStorage check above,
+         * the server rejects the write.
+         *
+         * The lock document ID is {uid}__{placeId} so the rule can
+         * find it with a predictable get() path.
+         */
+        const batch = writeBatch(db);
+
+        // 1. Create the check-in document
+        const checkInRef = doc(collection(db, 'checkins'));
+        batch.set(checkInRef, {
             placeId,
             level,
             timestamp: serverTimestamp(),
             uid,
         });
-        //set cooldown
+
+        // 2. Write (or overwrite) the cooldown lock document
+        const lockId = `${uid}__${placeId}`;
+        const lockRef = doc(db, 'cooldowns', lockId);
+        batch.set(lockRef, {
+            placeId,
+            uid,
+            timestamp: serverTimestamp(),
+        });
+
+        // Commit both writes atomically
+        await batch.commit();
+
+        //set local cooldown (fast client-side check for next time)
         await setCooldown(placeId);
-        //read the document back to get the server-set timestamp
+
+        //read the check-in document back to get the server-set timestamp
         const checkInDoc = await getDoc(checkInRef);
         if (!checkInDoc.exists()) {
             console.error('Check-in document not found after creation');
-            return null;
+            return { success: false, reason: 'error', message: 'Check-in was saved but could not be confirmed.' };
         }
         //extract the server timestamp from the document
         const data = checkInDoc.data();
         const timestampValue = data.timestamp;
         //convert Firestore Timestamp to JavaScript Date
-        const timestampDate = timestampValue instanceof Timestamp 
-            ? timestampValue.toDate() 
+        const timestampDate = timestampValue instanceof Timestamp
+            ? timestampValue.toDate()
             : new Date(timestampValue);
-       
+
         //return the check-in with server-set timestamp
         return {
-            id: checkInRef.id,
-            placeId,
-            level,
-            timestamp: timestampDate,
-            uid,
+            success: true,
+            checkIn: {
+                id: checkInRef.id,
+                placeId,
+                level,
+                timestamp: timestampDate,
+                uid,
+            },
         };
-         
+
     } catch (error) {
         console.error('Error submitting check-in:', error);
-        return null;
+        return { success: false, reason: 'error', message: 'Failed to submit check-in. Please try again.' };
     }
 }
 

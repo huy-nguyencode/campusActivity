@@ -23,8 +23,29 @@ import { Place, AdminOverride } from '@/types';
  * "Null Object" idea: callers can simply check `if (place.adminOverride)`
  * instead of guarding against undefined.
  */
-function doctoPlace(id: string, data: unknown): Place {
+/**
+ * LEARNING POINT: Defensive Hydration at the Boundary
+ *
+ * Firestore is schemaless — there's no guarantee a document has the
+ * fields you expect. Malformed data (e.g., missing `location`) would
+ * crash the entire places subscription if we blindly access nested
+ * properties. By returning null for invalid documents and filtering
+ * them out in the caller, one bad document can't take down the map.
+ */
+function doctoPlace(id: string, data: unknown): Place | null {
     const doc = data as Record<string, unknown>;
+
+    // Validate required fields exist before accessing them
+    if (!doc.name || !doc.location || typeof doc.location !== 'object') {
+        console.warn(`[places] Skipping malformed place document: ${id} (missing name or location)`);
+        return null;
+    }
+
+    const location = doc.location as Record<string, unknown>;
+    if (typeof location.latitude !== 'number' || typeof location.longitude !== 'number') {
+        console.warn(`[places] Skipping place ${id}: invalid lat/lng`);
+        return null;
+    }
 
     // Parse adminOverride if it exists in the Firestore document
     let adminOverride: AdminOverride | null = null;
@@ -41,10 +62,10 @@ function doctoPlace(id: string, data: unknown): Place {
     return {
         id,
         name: doc.name as string,
-        type: doc.type as Place['type'],
+        type: (doc.type as Place['type']) ?? 'study',
         location: {
-            latitude: (doc.location as Record<string, number>).latitude,
-            longitude: (doc.location as Record<string, number>).longitude,
+            latitude: location.latitude as number,
+            longitude: location.longitude as number,
         },
         busyPercent: (doc.busyPercent as number) ?? 0,
         lastUpdate: doc.lastUpdate ? (doc.lastUpdate as Timestamp).toDate() : null,
@@ -59,8 +80,10 @@ export function subscribePlaces(onPlaces: (places: Place[]) => void, onError?: (
 
     //listen for changes in the places collection
     const unsubscribe = onSnapshot(placesQuery, (snapshot) => {
-        //convert to place objects
-        const places: Place[] = snapshot.docs.map((doc) => doctoPlace(doc.id, doc.data()));
+        // Convert to place objects, filtering out any malformed documents
+        const places: Place[] = snapshot.docs
+            .map((doc) => doctoPlace(doc.id, doc.data()))
+            .filter((place): place is Place => place !== null);
         onPlaces(places);
     }, (error) => {
         console.error('Error subscribing to places:', error);
@@ -79,9 +102,8 @@ export async function getPlaceById(placeId: string): Promise<Place | null> {
 
     if (!placeSnap.exists()) {
         return null;
-    } else {
-        return doctoPlace(placeSnap.id, placeSnap.data());
     }
+    return doctoPlace(placeSnap.id, placeSnap.data());
 }
 
 /**
@@ -107,6 +129,7 @@ export function subscribePlace(
 
     return onSnapshot(placeRef, (snapshot) => {
         if (snapshot.exists()) {
+            // doctoPlace returns null for malformed documents
             onPlace(doctoPlace(snapshot.id, snapshot.data()));
         } else {
             onPlace(null);

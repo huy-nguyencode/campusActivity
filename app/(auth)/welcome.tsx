@@ -57,11 +57,11 @@ export default function Welcome() {
 
     const handleRequestPermission = async () => {
         await requestPermission();
-        router.replace('/(tabs)');
+        router.replace('/(tabs)/map');
     };
 
     const handleSkip = () => {
-        router.replace('/(tabs)');
+        router.replace('/(tabs)/map');
     };
 
     return (

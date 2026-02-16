@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { CONFIG } from '@/constants/config';
+import { CONFIG } from '@/constants/appConfig';
 import {
     COLORS,
     FONTS,
