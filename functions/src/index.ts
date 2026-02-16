@@ -201,9 +201,22 @@ export const aggregateBusyPercent = onSchedule(
                 });
             });
 
-            // Step 4: Calculate and update each place
-            const batch = db.batch();
+            /**
+             * Step 4: Calculate and update each place
+             *
+             * LEARNING POINT: Batch Size Limits
+             *
+             * Firestore batches have a hard limit of 500 operations.
+             * If you exceed this, the commit() call throws an error.
+             * We chunk updates into groups of 500 to handle any number
+             * of places safely. Each chunk is committed independently —
+             * if one fails, others still succeed.
+             */
+            const MAX_BATCH_SIZE = 500;
+            let currentBatch = db.batch();
+            let batchCount = 0;
             let updateCount = 0;
+            const batchPromises: Promise<admin.firestore.WriteResult[]>[] = [];
 
             placesSnapshot.forEach((placeDoc) => {
                 const placeId = placeDoc.id;
@@ -223,14 +236,25 @@ export const aggregateBusyPercent = onSchedule(
                     lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
                 };
 
-                batch.update(placeDoc.ref, update);
+                currentBatch.update(placeDoc.ref, update);
+                batchCount++;
                 updateCount++;
 
                 console.log(`Place ${placeId}: ${placeCheckIns.length} check-ins -> ${busyPercent}%`);
+
+                // Start a new batch when we hit the limit
+                if (batchCount >= MAX_BATCH_SIZE) {
+                    batchPromises.push(currentBatch.commit());
+                    currentBatch = db.batch();
+                    batchCount = 0;
+                }
             });
 
-            // Step 5: Commit all updates
-            await batch.commit();
+            // Step 5: Commit remaining updates
+            if (batchCount > 0) {
+                batchPromises.push(currentBatch.commit());
+            }
+            await Promise.all(batchPromises);
             console.log(`Successfully updated ${updateCount} places`);
 
         } catch (error) {

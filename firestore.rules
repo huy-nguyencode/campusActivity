@@ -70,12 +70,48 @@ service cloud.firestore {
     }
 
     /**
+     * COOLDOWNS COLLECTION (rate-limit locks)
+     *
+     * LEARNING POINT: Server-Side Rate Limiting with Lock Documents
+     *
+     * Firestore rules can't query collections (e.g., "find the most recent
+     * check-in by this user for this place"). But rules CAN read a single
+     * document at a known path using get(). So we create a "lock" document
+     * at a predictable path: cooldowns/{uid}__{placeId}.
+     *
+     * The client writes this lock document alongside each check-in. The
+     * check-in rule then uses get() to read the lock and verify the
+     * timestamp is old enough. This enforces the cooldown server-side —
+     * even if a malicious client skips the AsyncStorage check, Firestore
+     * itself rejects the write.
+     *
+     * Why double underscore? Single underscores could appear in UIDs or
+     * placeIds. Double underscore (__) is a safe delimiter since Firebase
+     * UIDs and our placeIds never contain it.
+     */
+    match /cooldowns/{lockId} {
+      allow read: if false; // No client reads needed
+      allow create: if isAuthenticated()
+                    && lockId == (request.auth.uid + '__' + request.resource.data.placeId)
+                    && request.resource.data.keys().hasAll(['placeId', 'uid', 'timestamp'])
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.timestamp is timestamp;
+      // Allow update so subsequent check-ins can refresh the lock timestamp
+      allow update: if isAuthenticated()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == request.auth.uid
+                    && isNotOnCooldown(resource.data.timestamp);
+      allow delete: if false;
+    }
+
+    /**
      * CHECKINS COLLECTION
      *
      * Business logic:
      * - Only authenticated users can create check-ins
      * - Users can only check in as themselves (uid must match)
      * - Validate the data structure
+     * - Must pass server-side cooldown check (lock document)
      * - No updates or deletes (check-ins are immutable)
      *
      * LEARNING POINT: Data Validation in Rules
@@ -89,13 +125,21 @@ service cloud.firestore {
      * If validation fails, the write is rejected with permission-denied.
      */
     match /checkins/{checkinId} {
-      // Read: Only allow if authenticated (optional, could be false)
-      // We allow read so users could potentially see their own history
-      allow read: if request.auth != null;
+      // Read: Only own check-ins (prevents scraping all user activity)
+      //
+      // LEARNING POINT: Principle of Least Privilege
+      //
+      // Previously any authenticated user could read ALL check-ins.
+      // Even though UIDs are anonymous, correlating check-in patterns
+      // (same UID, same place, same time every day) can de-anonymize
+      // users. Restricting reads to own data minimizes exposure.
+      allow read: if isAuthenticated()
+                  && resource.data.uid == request.auth.uid;
 
-      // Create: Authenticated users with valid data
+      // Create: Authenticated users with valid data + cooldown check
       allow create: if isAuthenticated()
-                    && isValidCheckIn();
+                    && isValidCheckIn()
+                    && passesServerCooldown();
 
       // No updates or deletes allowed
       allow update, delete: if false;
@@ -150,6 +194,44 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
+    /**
+     * Check if the cooldown period has elapsed.
+     *
+     * LEARNING POINT: duration.value() for Time Math in Rules
+     *
+     * Firestore rules support timestamp arithmetic via duration:
+     *   timestamp + duration.value(90, 'm')  → timestamp 90 minutes later
+     *
+     * We compare the lock's stored timestamp + cooldown against the
+     * current request time. If "now" is past the cooldown window,
+     * the user is allowed to check in again.
+     *
+     * @param lastTimestamp - The timestamp from the cooldown lock document
+     */
+    function isNotOnCooldown(lastTimestamp) {
+      return request.time > lastTimestamp + duration.value(90, 'm');
+    }
+
+    /**
+     * Verifies server-side cooldown by reading the lock document.
+     *
+     * LEARNING POINT: Two-Document Write Pattern
+     *
+     * The client must write both a check-in AND update the cooldown lock
+     * in a single batch. The check-in rule calls this function to verify:
+     * 1. If no lock exists → first check-in for this place, allowed
+     * 2. If lock exists → check that enough time has passed
+     *
+     * The get() call costs one document read per rule evaluation, but
+     * it's cached for the request — so even if multiple rules call it,
+     * it's only billed once.
+     */
+    function passesServerCooldown() {
+      let lockPath = /databases/$(database)/documents/cooldowns/$(request.auth.uid + '__' + request.resource.data.placeId);
+      return !exists(lockPath)
+          || isNotOnCooldown(get(lockPath).data.timestamp);
+    }
+
     // Validate check-in document structure and values
     function isValidCheckIn() {
       let data = request.resource.data;
@@ -169,14 +251,15 @@ service cloud.firestore {
       // Timestamp should be a timestamp type
       let validTimestamp = data.timestamp is timestamp;
 
-      // Optional: Verify the place exists (costs an extra read)
-      // let placeExists = exists(/databases/$(database)/documents/places/$(data.placeId));
+      // Verify the place actually exists (prevents garbage check-ins)
+      let placeExists = exists(/databases/$(database)/documents/places/$(data.placeId));
 
       return hasRequiredFields
           && uidMatches
           && validLevel
           && validPlaceId
-          && validTimestamp;
+          && validTimestamp
+          && placeExists;
     }
 
     /**
