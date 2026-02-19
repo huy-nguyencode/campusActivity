@@ -50,6 +50,7 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "expo-module-scripts": "^5.0.8",
+    "firebase-admin": "^13.6.1",
     "typescript": "~5.9.2"
   },
   "private": true

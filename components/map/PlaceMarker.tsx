@@ -3,13 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Place } from '@/types';
 import {
     COLORS,
-    FONTS,
-    FONT_SIZES,
-    SPACING,
-    RADIUS,
     SHADOWS,
-    SEMANTIC_COLORS,
-    getBusyStatus,
 } from '@/constants/theme';
 
 interface PlaceMarkerProps {
@@ -31,14 +25,16 @@ interface PlaceMarkerProps {
 const PLACE_TYPE_ICONS: Record<string, string> = {
     'library': '📚',
     'gym': '🏋️',
-    'cafe': '☕',
     'dining hall': '🍽️',
     'study': '📖',
     'food truck': '🍔',
+    'the wall': '🍴',
+    'bagel': '🥯',
+    'restaurant': '🍴',
+    'cafe': '☕️',
 };
 
 export function PlaceMarker({ place, onPress }: PlaceMarkerProps) {
-    const busyStatus = getBusyStatus(place.busyPercent);
     const placeIcon = PLACE_TYPE_ICONS[place.type] ?? '📍';
 
     return (
@@ -48,7 +44,7 @@ export function PlaceMarker({ place, onPress }: PlaceMarkerProps) {
                 longitude: place.location.longitude,
             }}
             onPress={onPress}
-            accessibilityLabel={`${place.name}, ${busyStatus.label}`}
+            accessibilityLabel={place.name}
         >
             {/* Circular marker showing place type icon */}
             <View style={styles.markerContainer}>
@@ -59,22 +55,9 @@ export function PlaceMarker({ place, onPress }: PlaceMarkerProps) {
                 <View style={styles.markerPointer} />
             </View>
 
-            {/* Custom callout — busyness is shown here on tap */}
-            <Callout tooltip onPress={onPress}>
-                <View style={styles.callout}>
-                    <View style={[styles.calloutStrip, { backgroundColor: busyStatus.color }]} />
-                    <View style={styles.calloutContent}>
-                        <Text style={styles.calloutTitle}>{place.name}</Text>
-                        <View style={styles.calloutRow}>
-                            <View style={[styles.busyPill, { backgroundColor: busyStatus.lightBg }]}>
-                                <View style={[styles.busyDot, { backgroundColor: busyStatus.color }]} />
-                                <Text style={[styles.busyText, { color: busyStatus.color }]}>
-                                    {busyStatus.label}
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
+            {/* Disable the default callout — tapping navigates to detail screen */}
+            <Callout tooltip>
+                <></>
             </Callout>
         </Marker>
     );
@@ -110,48 +93,5 @@ const styles = StyleSheet.create({
         borderRightColor: 'transparent',
         borderTopColor: COLORS.neutral[0],
         marginTop: -2,
-    },
-    callout: {
-        backgroundColor: SEMANTIC_COLORS.background.card,
-        borderRadius: RADIUS.lg,
-        overflow: 'hidden',
-        ...SHADOWS.lg,
-    },
-    calloutStrip: {
-        height: 4,
-        borderTopLeftRadius: RADIUS.lg,
-        borderTopRightRadius: RADIUS.lg,
-    },
-    calloutContent: {
-        paddingHorizontal: SPACING[4],
-        paddingVertical: SPACING[3],
-    },
-    calloutTitle: {
-        fontSize: FONT_SIZES.md,
-        fontFamily: FONTS.display.bold,
-        color: SEMANTIC_COLORS.text.primary,
-        marginBottom: SPACING[2],
-    },
-    calloutRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: SPACING[2],
-    },
-    busyPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: SPACING[3],
-        paddingVertical: SPACING[1],
-        borderRadius: RADIUS.full,
-    },
-    busyDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: SPACING[2],
-    },
-    busyText: {
-        fontSize: FONT_SIZES.sm,
-        fontFamily: FONTS.body.semiBold,
     },
 });
