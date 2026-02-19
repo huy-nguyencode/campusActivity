@@ -16,22 +16,6 @@ export async function checkLocationPermission(): Promise<LocationPermissionStatu
     return status as LocationPermissionStatus;
 }
 
-export async function getCurrentLocation(): Promise<LocationState | null> {
-    try {
-        const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-    });
-    return {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        accuracy: location.coords.accuracy,
-        timestamp: location.timestamp,
-    };
-    } catch (error) {
-        console.error('Error getting current location:', error);
-        return null;
-    }
-}
 
 export async function watchLocation(callback: (location: LocationState) => void, options?: {
         interval?: number; // how often to update the location

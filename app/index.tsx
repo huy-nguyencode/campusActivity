@@ -1,6 +1,7 @@
 import { View, ActivityIndicator } from "react-native";
 import { Redirect } from 'expo-router';
 import { useLocation } from '@/hooks/useLocation';
+import { COLORS } from '@/constants/theme';
 
 export default function Index() {
   //get location permission status
@@ -9,7 +10,7 @@ export default function Index() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color={COLORS.primary[500]} />
       </View>
     );
   }

@@ -31,10 +31,20 @@ export const CONFIG = {
 // This maintains backward compatibility while using the new design system
 export { BUSY_COLORS } from './theme';
 
-
 //emoji icons for busyness levels
 export const BUSY_LEVEL_ICONS = {
     GREEN: '😊',
     YELLOW: '😟',
     RED: '🤬',
 } as const;
+
+/**
+ * Maps BusyLevel (1|2|3) to a busy percentage.
+ * Shared between CheckInButtons, AdminOverridePanel, and Cloud Functions
+ * so the mapping is always consistent.
+ */
+export const LEVEL_TO_PERCENT: Record<1 | 2 | 3, number> = {
+    1: 0,
+    2: 50,
+    3: 100,
+};

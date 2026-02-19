@@ -33,7 +33,7 @@ export function useAuth() {
             } else {
                 try {
                     setIsLoading(true);
-                    const newUser = await signInAnon();
+                    await signInAnon();
                 } catch (error) {
                     setError((error as Error).message);
                     setIsLoading(false);

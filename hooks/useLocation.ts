@@ -41,7 +41,7 @@ export function useLocation() {
                 setIsLoading(true);
                 const status = await checkLocationPermission();
                 setPermission(status);
-                if (status != 'granted') {
+                if (status !== 'granted') {
                     setIsLoading(false);
                 }
             } catch (error) {

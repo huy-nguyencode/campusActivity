@@ -17,6 +17,7 @@
 import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { AdminOverride, BusyLevel } from '@/types';
+import { LEVEL_TO_PERCENT } from '@/constants/config';
 import {
     COLORS,
     FONTS,
@@ -26,13 +27,6 @@ import {
     SHADOWS,
     SEMANTIC_COLORS,
 } from '@/constants/theme';
-
-/** Same mapping as Cloud Function's LEVEL_TO_PERCENT */
-const LEVEL_TO_PERCENT: Record<BusyLevel, number> = {
-    1: 0,
-    2: 50,
-    3: 100,
-};
 
 const BUSY_LEVELS: {
     level: BusyLevel;

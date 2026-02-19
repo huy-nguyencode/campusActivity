@@ -2,8 +2,8 @@ import { db } from '@/config/firebase';
 import {
     collection,
     doc,
+    getDoc,
     onSnapshot,
-    query,
     Timestamp,
     Unsubscribe,
 } from 'firebase/firestore';
@@ -55,10 +55,9 @@ function doctoPlace(id: string, data: unknown): Place {
 
 export function subscribePlaces(onPlaces: (places: Place[]) => void, onError?: (error: Error) => void): Unsubscribe {
     const placeRef = collection(db, 'places');
-    const placesQuery = query(placeRef);
 
     //listen for changes in the places collection
-    const unsubscribe = onSnapshot(placesQuery, (snapshot) => {
+    const unsubscribe = onSnapshot(placeRef, (snapshot) => {
         //convert to place objects
         const places: Place[] = snapshot.docs.map((doc) => doctoPlace(doc.id, doc.data()));
         onPlaces(places);
@@ -72,8 +71,6 @@ export function subscribePlaces(onPlaces: (places: Place[]) => void, onError?: (
 
 //get place by id one time not real time
 export async function getPlaceById(placeId: string): Promise<Place | null> {
-    const { getDoc } = await import('firebase/firestore');
-
     const placeRef = doc(db, 'places', placeId);
     const placeSnap = await getDoc(placeRef);
 

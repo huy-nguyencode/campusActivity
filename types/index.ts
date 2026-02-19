@@ -42,7 +42,7 @@ export interface Place {
  * LEARNING POINT: Union types restrict values to specific strings.
  * If you try to use 'restaurant' (not in the list), TypeScript errors.
  */
-export type PlaceType = 'dining hall' | 'library' | 'gym' | 'cafe' | 'food truck' | 'study';
+export type PlaceType = 'dining hall' | 'library' | 'gym' | 'cafe' | 'food truck' | 'study' | 'the wall' | 'bagel' | 'restaurant';
 
 /**
  * Geographic coordinates
@@ -68,12 +68,12 @@ export interface CheckIn {
 
 /**
  * Crowd level options for check-in
- * 0 = empty/not busy, 1 = moderate, 2 = busy/crowded
+ * 1 = not busy, 2 = moderate, 3 = very busy
  *
  * LEARNING POINT: Using a union of literal numbers (not just 'number')
  * ensures only valid values can be used. level = 5 would error.
  */
-export type BusyLevel = 1| 2| 3;
+export type BusyLevel = 1 | 2 | 3;
 
 /**
  * User's current location from device GPS
@@ -94,7 +94,7 @@ export interface LocationState {
 export interface ProximityResult {
   place: Place;
   distance: number;        // Distance in meters from user
-  isNearby: boolean;       // True if within check-in radius (3 meters / ~10 feet)
+  isNearby: boolean;       // True if within check-in radius (50 meters)
 }
 
 /**
