@@ -43,14 +43,12 @@ export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage)
 });
 
-// Initialize Firestore with named database
-// LEARNING POINT: Firebase supports multiple named databases per project.
-// If you created a database with a custom name (like "default") instead of
-// using the implicit (default) database, you must specify the database ID
-// as the second argument to getFirestore.
-//
-// The implicit default database has no name (accessed with just getFirestore(app))
-// Named databases require: getFirestore(app, 'database-name')
-export const db = getFirestore(app, 'default');
+// Initialize Firestore with the implicit (default) database
+// LEARNING POINT: Firebase's implicit default database is accessed with just
+// getFirestore(app) — no second argument. This is what the Admin SDK, Cloud
+// Functions, and all Firebase tooling connect to by default. Using a named
+// database creates a separate, disconnected instance that other Firebase
+// services won't see unless explicitly configured.
+export const db = getFirestore(app);
 
 export default app;

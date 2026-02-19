@@ -25,10 +25,13 @@ interface PlaceMarkerProps {
 const PLACE_TYPE_ICONS: Record<string, string> = {
     'library': '📚',
     'gym': '🏋️',
-    'cafe': '☕',
     'dining hall': '🍽️',
     'study': '📖',
     'food truck': '🍔',
+    'the wall': '🍴',
+    'bagel': '🥯',
+    'restaurant': '🍴',
+    'cafe': '☕️',
 };
 
 export function PlaceMarker({ place, onPress }: PlaceMarkerProps) {

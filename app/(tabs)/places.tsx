@@ -86,7 +86,7 @@ export default function PlacesScreen() {
             style={styles.container}
         >
             <FlatList
-                data={places}
+                data={[...places.sort((a, b) => a.name.localeCompare(b.name))]}
                 keyExtractor={(item) => item.id}
                 renderItem={renderPlace}
                 contentContainerStyle={[styles.listContainer, { paddingTop: insets.top + SPACING[4] }]}

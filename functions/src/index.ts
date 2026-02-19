@@ -55,11 +55,6 @@ interface CheckInDoc {
     uid: string;
 }
 
-interface PlaceUpdate {
-    busyPercent: number;
-    lastUpdate: admin.firestore.FieldValue;
-}
-
 /**
  * Calculates the decay weight for a check-in based on its age.
  *
@@ -218,12 +213,10 @@ export const aggregateBusyPercent = onSchedule(
                 const placeCheckIns = checkInsByPlace.get(placeId) || [];
                 const busyPercent = calculateBusyPercent(placeCheckIns, now);
 
-                const update: PlaceUpdate = {
+                batch.update(placeDoc.ref, {
                     busyPercent,
                     lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
-                };
-
-                batch.update(placeDoc.ref, update);
+                });
                 updateCount++;
 
                 console.log(`Place ${placeId}: ${placeCheckIns.length} check-ins -> ${busyPercent}%`);

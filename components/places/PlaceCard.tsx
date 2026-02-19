@@ -55,6 +55,8 @@ const PLACE_TYPE_ICONS: Record<string, { emoji: string; tint: string }> = {
     'dining hall': { emoji: '🍽️', tint: COLORS.accent[50] },
     'study': { emoji: '📖', tint: COLORS.secondary[50] },
     'food truck': { emoji: '🍔', tint: COLORS.accent[50] },
+    'restaurant': { emoji: '🍽️', tint: COLORS.accent[50] },
+    'the wall': {emoji: '🍴', tint: COLORS.accent[50] },
     'default': { emoji: '📍', tint: COLORS.neutral[100] },
 };
 

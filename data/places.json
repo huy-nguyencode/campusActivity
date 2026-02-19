@@ -1,12 +1,155 @@
 {
   "places": [
     {
-      "id": "johnson-dining",
+      "id": "J&H",
       "name": "Johnson & Hardwick Dining",
       "type": "dining hall",
       "location": {
-        "latitude": 39.98134,
-        "longitude": -75.15436
+        "latitude": 39.984441,
+        "longitude": -75.155746
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Eddie's pizza",
+      "name": "Eddie's Pizza",
+      "type": "the wall",
+      "location": {
+        "latitude": 39.980794,
+        "longitude": -75.153362
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Fame's Famous Pizza",
+      "name": "Fame's Famous Pizza",
+      "type": "the wall",
+      "location": {
+        "latitude": 39.980826,
+        "longitude": -75.153333
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Hank's",
+      "name": "Hank's",
+      "type": "the wall",
+      "location": {
+        "latitude": 39.980859,
+        "longitude": -75.153333
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "tai's vietnamese food",
+      "name": "Tai's Vietnamese Food",
+      "type": "the wall",
+      "location": {
+        "latitude": 39.980899,
+        "longitude": -75.153333
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Azteca's Mexican Grill",
+      "name": "Azteca's Mexican Grill",
+      "type": "the wall",
+      "location": {
+        "latitude": 39.980932,
+        "longitude": -75.153312
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Orient Express",
+      "name": "Orient Express",
+      "type": "the wall",
+      "location": {
+        "latitude": 39.980999,
+        "longitude": -75.153303
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Richie's",
+      "name": "Richie's",
+      "type": "the wall",
+      "location": {
+        "latitude": 39.980967,
+        "longitude": -75.153306
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Penn-Halal Gryo",
+      "name": "Penn-Halal Gyro",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.982386,
+        "longitude": -75.153258
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Temple Teppanyaki",
+      "name": "Temple Teppanyaki",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.982168,
+        "longitude": -75.153322
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Mexican Grill Stand",
+      "name": "Mexican Grill Stand",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979331,
+        "longitude": -75.155569
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Famous halal food",
+      "name": "Famous halal food",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979565,
+        "longitude": -75.155507
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Sunny halal food",
+      "name": "Sunny halal food",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979719,
+        "longitude": -75.155477
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "the-honey-truck",
+      "name": "the honey truck",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.98252,
+        "longitude": -75.15326
       },
       "busyPercent": 0,
       "lastUpdate": null
@@ -16,96 +159,239 @@
       "name": "Charles Library",
       "type": "library",
       "location": {
-        "latitude": 39.98215,
-        "longitude": -75.15289
+        "latitude": 39.9823,
+        "longitude": -75.15514
       },
       "busyPercent": 0,
       "lastUpdate": null
     },
     {
-      "id": "irt-gym",
-      "name": "IRT Recreation Center",
-      "type": "gym",
+      "id": "footlong-truck",
+      "name": "footlong truck",
+      "type": "food truck",
       "location": {
-        "latitude": 39.98089,
-        "longitude": -75.15612
+        "latitude": 39.98233,
+        "longitude": -75.1533
       },
       "busyPercent": 0,
       "lastUpdate": null
     },
     {
-      "id": "saxbys-cafe",
-      "name": "Saxbys Coffee",
+      "id": "Bagel Hut",
+      "name": "Bagel Hut",
+      "type": "bagel",
+      "location": {
+        "latitude": 39.980077,
+        "longitude": -75.156496
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "E & E Gourmet Express",
+      "name": "E & E Gourmet Express",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979994,
+        "longitude": -75.155910
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Brood Coffee Truck",
+      "name": "Brood Coffee Truck",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.980024,
+        "longitude": -75.156170
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Fruit & Smoothie Truck",
+      "name": "Fruit & Smoothie Truck",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979940,
+        "longitude": -75.155705
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "The Patty Wagon",
+      "name": "The Patty Wagon",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979898,
+        "longitude": -75.155135
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Cha Cha",
+      "name": "Cha Cha",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979903,
+        "longitude": -75.154946
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Nanu’s Hot Chicken",
+      "name": "Nanu’s Hot Chicken",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979867,
+        "longitude": -75.154854
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Friendly Tasty Dishes",
+      "name": "Friendly Tasty Dishes",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979833,
+        "longitude": -75.154711
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Bagel Shop",
+      "name": "Bagel Shop",
+      "type": "bagel",
+      "location": {
+        "latitude": 39.979996,
+        "longitude": -75.154678
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Taco Texas",
+      "name": "Taco Texas",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.979814,
+        "longitude": -75.154443
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Korea house food truck",
+      "name": "Korea house food truck",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.983001,
+        "longitude": -75.155000
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "The Crepe Truck Philly",
+      "name": "The Crepe Truck Philly",
+      "type": "food truck",
+      "location": {
+        "latitude": 39.982934,
+        "longitude": -75.154406
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Chick-fil-A",
+      "name": "Chick-fil-A",
+      "type": "restaurant",
+      "location": {
+        "latitude": 39.93933,
+        "longitude": -75.15493
+      },
+      "busyPercent": 100,
+      "lastUpdate": null
+    },
+    {
+      "id": "Wingstop",
+      "name": "Wingstop",
+      "type": "restaurant",
+      "location": {
+        "latitude": 39.97930,
+        "longitude": -75.15508
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Saladworks",
+      "name": "Saladworks",
+      "type": "restaurant",
+      "location": {
+        "latitude": 39.97955,
+        "longitude": -75.15481
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "BurgerFi",
+      "name": "BurgerFi",
+      "type": "restaurant",
+      "location": {
+        "latitude": 39.97933,
+        "longitude": -75.15508
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Panera Bread",
+      "name": "Panera Bread",
+      "type": "restaurant",
+      "location": {
+        "latitude": 39.98106,
+        "longitude": -75.15769
+      },
+      "busyPercent": 0,
+      "lastUpdate": null
+    },
+    {
+      "id": "Richie's Café",
+      "name": "Richie's Café",
       "type": "cafe",
       "location": {
-        "latitude": 39.98156,
-        "longitude": -75.15523
+        "latitude": 39.98066,
+        "longitude": -75.15139
       },
       "busyPercent": 0,
       "lastUpdate": null
     },
     {
-      "id": "morgan-cafe",
-      "name": "Morgan Hall Cafe",
-      "type": "cafe",
+      "id": "Chiptole",
+      "name": "Chiptole",
+      "type": "restaurant",
       "location": {
-        "latitude": 39.98267,
-        "longitude": -75.15178
-      },
-      "busyPercent": 0,
-      "lastUpdate": null
-    },
-    {
-      "id": "tuttleman-food",
-      "name": "Tuttleman Food Court",
-      "type": "dining hall",
-      "location": {
-        "latitude": 39.98045,
-        "longitude": -75.15534
-      },
-      "busyPercent": 0,
-      "lastUpdate": null
-    },
-    {
-      "id": "tech-center-cafe",
-      "name": "Tech Center Cafe",
-      "type": "cafe",
-      "location": {
-        "latitude": 39.98312,
-        "longitude": -75.15445
-      },
-      "busyPercent": 0,
-      "lastUpdate": null
-    },
-    {
-      "id": "student-center",
-      "name": "Howard Gittis Student Center",
-      "type": "dining hall",
-      "location": {
-        "latitude": 39.98178,
+        "latitude": 39.97951,
         "longitude": -75.15367
       },
       "busyPercent": 0,
       "lastUpdate": null
     },
     {
-      "id": "pearson-mcginnis",
-      "name": "Pearson-McGinnis Gym",
-      "type": "gym",
+      "id": "Cava",
+      "name": "Cava",
+      "type": "restaurant",
       "location": {
-        "latitude": 39.97998,
-        "longitude": -75.15701
-      },
-      "busyPercent": 0,
-      "lastUpdate": null
-    },
-    {
-      "id": "food-truck-alley",
-      "name": "Food Truck Row",
-      "type": "food truck",
-      "location": {
-        "latitude": 39.98234,
-        "longitude": -75.15312
+        "latitude": 39.97945,
+        "longitude": -75.15311
       },
       "busyPercent": 0,
       "lastUpdate": null
