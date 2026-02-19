@@ -5,7 +5,7 @@
 // location related constants
 export const CONFIG = {
     // how far away from the place can you check in
-    CHECK_IN_RADIUS: 3, // meters (~10 feet)
+    CHECK_IN_RADIUS: 50, // meters — large enough for real GPS variance, tight enough to be meaningful
     // how often to update location
     LOCATION_UPDATE_INTERVAL: 5000, // milliseconds
     // minimum distance to update location
@@ -13,7 +13,7 @@ export const CONFIG = {
     // minimum accuracy to update location
     MINIMUM_ACCURACY_TO_UPDATE_LOCATION: 10, // meters
     // minimum accuracy to check in
-    MINIMUM_ACCURACY_TO_CHECK_IN: 10, // meters
+    MINIMUM_ACCURACY_TO_CHECK_IN: 30, // meters — phones near buildings typically read 15-30m
     //cooldown time for check in
     CHECK_IN_COOLDOWN: 90, // minutes
 
