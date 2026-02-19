@@ -49,10 +49,13 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const PLACE_TYPE_ICONS: Record<string, string> = {
     'library': '📚',
     'gym': '🏋️',
-    'cafe': '☕',
+    'cafe': '☕️',
     'dining hall': '🍽️',
     'study': '📖',
     'food truck': '🍔',
+    'the wall': '🍴',
+    'bagel': '🥯',
+    'restaurant': '🍴',
 };
 
 export default function PlaceScreen() {
