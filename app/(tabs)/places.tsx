@@ -1,14 +1,3 @@
-/**
- * Places List Screen - Alternative view when user prefers a list over map
- *
- * LEARNING POINT: Multiple Views for Same Data
- *
- * Users have different preferences. Some prefer maps, others prefer lists.
- * By providing both views of the same data, you:
- * 1. Accommodate different user preferences
- * 2. Support accessibility (lists are easier for screen readers)
- * 3. Handle cases where map isn't practical (poor location, indoor use)
- */
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -73,14 +62,6 @@ export default function PlacesScreen() {
     );
 
     return (
-        /**
-         * LEARNING POINT: Gradient Background on List Screens
-         *
-         * Wrapping a FlatList in a LinearGradient gives the entire screen
-         * a warm, living feel. The gradient (cream → neutral-50) is subtle
-         * enough not to distract from the cards but adds warmth vs. a flat
-         * background color. The gradient acts as a "canvas" for the floating cards.
-         */
         <LinearGradient
             colors={[SEMANTIC_COLORS.background.warm, COLORS.neutral[50]]}
             style={styles.container}

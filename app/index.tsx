@@ -4,7 +4,6 @@ import { useLocation } from '@/hooks/useLocation';
 import { COLORS } from '@/constants/theme';
 
 export default function Index() {
-  //get location permission status
   const { permission, isLoading } = useLocation();
 
   if (isLoading) {

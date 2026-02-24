@@ -22,24 +22,6 @@ import {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-/**
- * LEARNING POINT: Welcome Screen — "Cherry" Aesthetic
- *
- * Key techniques for the cherry-cream warmth:
- *
- * 1. Multi-stop gradient (#FFF5F6 → #FFE0E4 → white) uses cherry primary
- *    tints instead of coral. The blush-pink middle stop gives the screen
- *    a warm "cherry blossom" feel.
- *
- * 2. Emoji glow ring — cherry primary[500] at 12% opacity creates a
- *    cherry-tinted halo behind the icon.
- *
- * 3. Gradient button — cherry primary[500] → primary[600] for a rich,
- *    saturated call-to-action that pops against the soft background.
- *
- * 4. Softer animation timing — 700ms FadeInUp with 250ms stagger gives
- *    a more graceful, unhurried entrance compared to 600ms/200ms.
- */
 export default function Welcome() {
     const { requestPermission } = useLocation();
     const insets = useSafeAreaInsets();
@@ -78,12 +60,10 @@ export default function Welcome() {
                 },
             ]}
         >
-            {/* Hero content */}
             <Animated.View
                 entering={FadeInUp.duration(700).delay(250)}
                 style={styles.heroSection}
             >
-                {/* Emoji with cherry-tinted glow ring */}
                 <View style={styles.emojiGlow}>
                     <Text style={styles.emoji}>📍</Text>
                 </View>
@@ -93,13 +73,11 @@ export default function Welcome() {
                 </Text>
             </Animated.View>
 
-            {/* Info section */}
             <Animated.View
                 entering={FadeInUp.duration(700).delay(500)}
                 style={styles.infoSection}
             >
                 <View style={styles.infoCard}>
-                    {/* Left border accent strip — cherry primary color */}
                     <View style={styles.infoAccent} />
                     <View style={styles.infoRow}>
                         <Text style={styles.infoIcon}>🔒</Text>
@@ -113,12 +91,10 @@ export default function Welcome() {
                 </View>
             </Animated.View>
 
-            {/* Action buttons */}
             <Animated.View
                 entering={FadeInUp.duration(700).delay(750)}
                 style={styles.buttonSection}
             >
-                {/* Primary CTA — cherry gradient button */}
                 <AnimatedPressable
                     style={[styles.primaryButtonOuter, primaryAnimatedStyle]}
                     onPress={handleRequestPermission}
@@ -139,7 +115,6 @@ export default function Welcome() {
                     </LinearGradient>
                 </AnimatedPressable>
 
-                {/* Secondary — Skip */}
                 <AnimatedPressable
                     style={[styles.secondaryButton, secondaryAnimatedStyle]}
                     onPress={handleSkip}
@@ -166,13 +141,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    /**
-     * LEARNING POINT: Cherry-Tinted Glow Ring
-     *
-     * Using primary[500] at 12% opacity (hex suffix '1F') instead of 10% ('1A')
-     * gives the cherry halo slightly more presence. The ring makes the emoji
-     * feel embedded in the design, tying it to the cherry color story.
-     */
     emojiGlow: {
         width: 96,
         height: 96,

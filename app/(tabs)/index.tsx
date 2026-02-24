@@ -1,15 +1,3 @@
-/**
- * Map Screen - Main tab showing all campus locations
- *
- * LEARNING POINT: File-Based Routing
- *
- * In Expo Router, the file path determines the route:
- * - app/(tabs)/index.tsx -> "/" (default tab)
- * - app/(tabs)/places.tsx -> "/places"
- *
- * The (tabs) folder name with parentheses creates a "group" -
- * it affects layout (uses tabs/_layout.tsx) but doesn't appear in the URL.
- */
 import {
     View,
     Text,
@@ -45,14 +33,6 @@ export default function MapScreen() {
     const { location, isLoading: locationLoading } = useLocation();
     const insets = useSafeAreaInsets();
 
-    /**
-     * LEARNING POINT: Warm Loading States
-     *
-     * Loading screens are often overlooked, but they're a chance to reinforce
-     * the brand. Instead of a generic spinner, we show the app emoji + warm
-     * background + friendly copy. This makes the wait feel intentional rather
-     * than broken.
-     */
     if (placesLoading || locationLoading) {
         return (
             <View style={styles.centered}>
@@ -123,7 +103,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'transparent',
     },
-    /** Full-bleed map like native Apple Maps. */
     map: {
         ...StyleSheet.absoluteFillObject,
     },

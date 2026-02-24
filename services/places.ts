@@ -10,23 +10,9 @@ import {
 
 import { Place, AdminOverride } from '@/types';
 
-
-/**
- * LEARNING POINT: Data Mapping / Hydration
- *
- * Firestore documents are schemaless blobs. This function "hydrates" raw
- * Firestore data into a strongly-typed Place object. Hydrating at the
- * boundary (right when data enters your app) means every downstream
- * consumer gets a safe, validated type — no defensive checks needed later.
- *
- * Notice how we default adminOverride to null when missing. This is the
- * "Null Object" idea: callers can simply check `if (place.adminOverride)`
- * instead of guarding against undefined.
- */
 function doctoPlace(id: string, data: unknown): Place {
     const doc = data as Record<string, unknown>;
 
-    // Parse adminOverride if it exists in the Firestore document
     let adminOverride: AdminOverride | null = null;
     if (doc.adminOverride && typeof doc.adminOverride === 'object') {
         const raw = doc.adminOverride as Record<string, unknown>;
@@ -52,13 +38,10 @@ function doctoPlace(id: string, data: unknown): Place {
     };
 }
 
-
 export function subscribePlaces(onPlaces: (places: Place[]) => void, onError?: (error: Error) => void): Unsubscribe {
     const placeRef = collection(db, 'places');
 
-    //listen for changes in the places collection
     const unsubscribe = onSnapshot(placeRef, (snapshot) => {
-        //convert to place objects
         const places: Place[] = snapshot.docs.map((doc) => doctoPlace(doc.id, doc.data()));
         onPlaces(places);
     }, (error) => {
@@ -68,8 +51,6 @@ export function subscribePlaces(onPlaces: (places: Place[]) => void, onError?: (
     return unsubscribe;
 }
 
-
-//get place by id one time not real time
 export async function getPlaceById(placeId: string): Promise<Place | null> {
     const placeRef = doc(db, 'places', placeId);
     const placeSnap = await getDoc(placeRef);
@@ -81,20 +62,6 @@ export async function getPlaceById(placeId: string): Promise<Place | null> {
     }
 }
 
-/**
- * Subscribe to a single place document in real time.
- *
- * LEARNING POINT: Document-Level Listeners
- *
- * `onSnapshot` can listen to a single document (not just a collection).
- * This is more efficient than subscribing to the entire places collection
- * when you only care about one place. Firestore only sends data for the
- * one document, reducing bandwidth and read costs.
- *
- * The callback fires immediately with the current state, then again
- * whenever the document changes — so admin overrides, Cloud Function
- * updates, etc. all appear instantly.
- */
 export function subscribePlace(
     placeId: string,
     onPlace: (place: Place | null) => void,

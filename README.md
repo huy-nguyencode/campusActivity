@@ -1,50 +1,72 @@
-# Welcome to your Expo app 👋
+# Campus Spots
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A real-time crowd-tracking iOS app for Temple University's campus. Students can check in at campus locations (dining halls, libraries, food trucks, etc.) to report how busy a spot is — helping others decide where to go before they walk there.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Interactive map** — All campus spots plotted on a live map with type-based icons
+- **List view** — Alphabetically sorted list of all locations with busy status
+- **Real-time crowd data** — Busy levels update every 5 minutes via a Firebase Cloud Function
+- **Anonymous check-in** — Rate a spot as Not Busy / Moderate / Very Busy when you're within 50m
+- **90-minute cooldown** — Prevents spam; a countdown timer shows when you can check in again
+- **Stale data indicator** — Warns users when data hasn't been updated in a while
+- **Admin override** — Admins can manually pin a location's busy level, bypassing the aggregation
+- **Privacy first** — No account required; location is used only on-device and never stored
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+| Layer | Technology |
+|---|---|
+| Framework | React Native + Expo (SDK 54) |
+| Navigation | Expo Router (file-based) |
+| Language | TypeScript |
+| Database | Firebase Firestore (real-time) |
+| Auth | Firebase Anonymous Auth |
+| Backend | Firebase Cloud Functions (scheduled) |
+| Maps | react-native-maps |
+| Animation | React Native Reanimated |
+| Fonts | Outfit (display) + Figtree (body) |
 
-   ```bash
-   npx expo start
-   ```
+## How It Works
 
-In the output, you'll find options to open the app in a
+1. A user opens the app and checks in at a nearby location, selecting a busy level (1–3).
+2. Check-ins are written to Firestore. A Cloud Function runs every 5 minutes and computes a weighted average using exponential decay (30-minute half-life) so recent check-ins matter more.
+3. The resulting `busyPercent` (0–100) is written back to each place document.
+4. All clients subscribed via `onSnapshot` receive the update instantly.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Project Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+app/                  Expo Router screens
+  (auth)/welcome      Location permission onboarding
+  (tabs)/index        Map screen
+  (tabs)/places       List screen
+  place/[id]          Place detail + check-in
+components/           Reusable UI components
+  admin/              Admin override panel
+  checkin/            Check-in buttons, cooldown timer, stale indicator
+  map/                Custom map marker
+  navigation/         Floating pill tab bar
+  places/             Place card
+config/               Firebase initialization
+constants/            Theme tokens and app config
+functions/src/        Cloud Function (busy percent aggregation)
+hooks/                Custom React hooks
+services/             Firebase / device API calls
+types/                TypeScript interfaces
+utils/                Haversine distance formula
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started
 
-## Learn more
+```bash
+npm install
+npm start          # Expo development server
+npm run ios        # iOS simulator
+npm run android    # Android emulator
+npm run lint       # ESLint
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Campus Data
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+33 Temple University locations are seeded: dining halls (J&H, Morgan Hall), Charles Library, IBC Student Recreation Center, The Wall vendors, and off-campus food trucks and restaurants.

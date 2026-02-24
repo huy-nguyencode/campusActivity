@@ -1,18 +1,3 @@
-/**
- * LEARNING POINT: Error Boundaries Must Be Class Components
- *
- * React's error boundary API (componentDidCatch, getDerivedStateFromError)
- * is only available on class components — there's no hook equivalent.
- * This is one of the few cases where class components are still necessary.
- *
- * An error boundary catches JavaScript errors anywhere in its child
- * component tree, logs them, and renders a fallback UI instead of
- * crashing the entire app.
- *
- * What it DOES catch: rendering errors, lifecycle errors, hook errors.
- * What it DOES NOT catch: event handlers, async code (setTimeout/promises),
- * or errors in the error boundary itself.
- */
 import React, { Component, type ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS } from '@/constants/theme';
@@ -36,7 +21,6 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     componentDidCatch(error: Error, info: React.ErrorInfo) {
-        // This is where you'd send to Sentry or a logging service
         console.error('ErrorBoundary caught:', error, info.componentStack);
     }
 

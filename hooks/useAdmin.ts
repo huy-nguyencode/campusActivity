@@ -1,24 +1,3 @@
-/**
- * useAdmin Hook — bridges admin service with React components
- *
- * LEARNING POINT: "Lift State Up" for Auth
- *
- * Originally this hook tried to manage its own auth listener, but
- * Firebase Auth's `onAuthStateChanged` can fire with `null` even when
- * a user is already signed in (due to async persistence restoration).
- * Instead of fighting this, we accept `uid` as a parameter — the
- * caller gets it from `useAuth`, which already resolved auth at the
- * root layout level. This is the "lift state up" pattern: let the
- * parent own the state, pass it down to children that need it.
- *
- * LEARNING POINT: useCallback for Stable References
- *
- * `setOverride` and `clearOverride` are wrapped in useCallback so their
- * identity stays the same across renders. If a child component receives
- * one of these as a prop, React.memo / PureComponent can skip re-renders
- * when nothing actually changed.
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { checkIsAdmin, setAdminOverride, removeAdminOverride } from '@/services/admin';
 
@@ -33,7 +12,6 @@ export function useAdmin(uid: string | null): UseAdminReturn {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Check admin status whenever the UID changes
     useEffect(() => {
         let cancelled = false;
 

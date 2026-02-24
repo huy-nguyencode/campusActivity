@@ -116,15 +116,6 @@ function BusyButton({
     );
 }
 
-/**
- * LEARNING POINT: Card-Wrapped Button Groups
- *
- * Wrapping the emoji buttons in a warm card container creates visual
- * grouping — the user sees "this is one interactive unit" rather than
- * three separate floating buttons. The warm shadow (SHADOWS.warm) and
- * display font prompt tie this section into the Cherry aesthetic.
- * The cherry-tinted warm shadow makes the card float on a pink cushion.
- */
 export function CheckInButtons({ onCheckIn, disabled = false, isLoading = false }: CheckInButtonsProps) {
     const handlePress = async (level: BusyLevel) => {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -150,7 +141,6 @@ export function CheckInButtons({ onCheckIn, disabled = false, isLoading = false 
                     ))}
                 </View>
 
-                {/* Loading overlay */}
                 {isLoading && (
                     <View style={styles.loadingOverlay}>
                         <ActivityIndicator size="large" color={COLORS.primary[500]} />

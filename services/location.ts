@@ -1,25 +1,21 @@
-//location service using expo location
 import * as Location from 'expo-location';
-// import the types for the location state and permission status
-import {LocationState, LocationPermissionStatus} from '@/types';
+import { LocationState, LocationPermissionStatus } from '@/types';
 
-
-// request location permission from users
 export async function requestLocationPermission(): Promise<LocationPermissionStatus> {
-    const {status} = await Location.requestForegroundPermissionsAsync(); //request permission to use location in the foreground
+    const { status } = await Location.requestForegroundPermissionsAsync();
     return status as LocationPermissionStatus;
 }
 
-// check for current permission status
 export async function checkLocationPermission(): Promise<LocationPermissionStatus> {
-    const {status} = await Location.getForegroundPermissionsAsync();
+    const { status } = await Location.getForegroundPermissionsAsync();
     return status as LocationPermissionStatus;
 }
 
-
-export async function watchLocation(callback: (location: LocationState) => void, options?: {
-        interval?: number; // how often to update the location
-        distanceMeters?: number; // how far to move before updating the location
+export async function watchLocation(
+    callback: (location: LocationState) => void,
+    options?: {
+        interval?: number;
+        distanceMeters?: number;
     }
 ): Promise<Location.LocationSubscription> {
     return await Location.watchPositionAsync({
@@ -33,6 +29,5 @@ export async function watchLocation(callback: (location: LocationState) => void,
             accuracy: location.coords.accuracy,
             timestamp: location.timestamp,
         });
-    }
-    );
+    });
 }

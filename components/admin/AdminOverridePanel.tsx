@@ -1,19 +1,3 @@
-/**
- * AdminOverridePanel — lets admins manually set a place's busy level
- *
- * LEARNING POINT: Visual Differentiation for Admin Controls
- *
- * Admin panels need to feel distinct from regular user UI so admins
- * know they're using elevated privileges. Techniques used here:
- *
- * 1. Dashed border — universally signals "special/different" in UI
- * 2. Accent-50 background tint — warm but clearly distinct from white cards
- * 3. Shield emoji (🛡️) — instant "admin mode" recognition
- *
- * The BusyLevel-to-percentage mapping (1→0%, 2→50%, 3→100%) matches
- * the Cloud Function's LEVEL_TO_PERCENT config.
- */
-
 import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { AdminOverride, BusyLevel } from '@/types';
@@ -99,7 +83,6 @@ export function AdminOverridePanel({ placeId, currentOverride, onApply, onRemove
 
     return (
         <View style={styles.container}>
-            {/* Header with shield emoji */}
             <View style={styles.header}>
                 <Text style={styles.title}>🛡️ Admin Override</Text>
                 {isOverrideActive && (
@@ -111,7 +94,6 @@ export function AdminOverridePanel({ placeId, currentOverride, onApply, onRemove
 
             <Text style={styles.prompt}>Set busy level:</Text>
 
-            {/* Emoji buttons — same as check-in UI */}
             <View style={styles.emojiRow}>
                 {BUSY_LEVELS.map(({ level, emoji, label, bgColor, textColor }) => {
                     const isCurrentLevel = isOverrideActive
@@ -140,7 +122,6 @@ export function AdminOverridePanel({ placeId, currentOverride, onApply, onRemove
                 })}
             </View>
 
-            {/* Loading indicator */}
             {isApplying && (
                 <View style={styles.loadingRow}>
                     <ActivityIndicator size="small" color={COLORS.primary[500]} />
@@ -148,7 +129,6 @@ export function AdminOverridePanel({ placeId, currentOverride, onApply, onRemove
                 </View>
             )}
 
-            {/* Remove override button */}
             {isOverrideActive && (
                 <Pressable
                     style={[styles.removeButton, isBusy && styles.disabled]}

@@ -12,17 +12,7 @@ interface StaleIndicatorProps {
     lastUpdate: Date | null;
 }
 
-/**
- * StaleIndicator - Shows warning when crowd data might be outdated
- *
- * LEARNING POINT: Visual Hierarchy in Warnings
- *
- * Warning indicators need to be noticeable but not alarming.
- * Using amber/yellow signals "caution" without the urgency of red.
- * The pill shape makes it feel like a friendly badge, not an error.
- */
 export function StaleIndicator({ lastUpdate }: StaleIndicatorProps) {
-    // No timestamp means no data yet
     if (!lastUpdate) {
         return (
             <View style={styles.noDataContainer}>
@@ -34,11 +24,9 @@ export function StaleIndicator({ lastUpdate }: StaleIndicatorProps) {
         );
     }
 
-    // Calculate time since last update
     const timeSinceUpdate = Date.now() - lastUpdate.getTime();
     const thresholdMs = CONFIG.STALE_CROWD_THRESHOLD * 60 * 1000;
 
-    // Data is fresh, don't show indicator
     if (timeSinceUpdate < thresholdMs) {
         return null;
     }

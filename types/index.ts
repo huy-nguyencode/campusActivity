@@ -1,119 +1,55 @@
-// types/index.ts
-// Central type definitions for Campus Spots
-//
-// LEARNING POINT: TypeScript interfaces define the "shape" of your data.
-// They catch errors at compile time (before your app runs) and provide
-// autocomplete in your editor. This makes refactoring safer and faster.
-
-/**
- * Admin override for manually setting a place's busy level.
- *
- * LEARNING POINT: Separation of Concerns via Types
- *
- * By making this its own interface (instead of inline fields on Place),
- * we get a clean "override object" that can be null when inactive. This
- * pattern is called a "value object" — a small, self-contained type that
- * groups related fields. It makes it easy to check `if (place.adminOverride)`
- * rather than testing multiple fields individually.
- */
 export interface AdminOverride {
-  active: boolean;        // Whether this override is currently in effect
-  busyPercent: number;    // The admin-set busy level (0-100)
-  setBy: string;          // UID of the admin who set it
-  setAt: Date | null;     // When the override was applied
+  active: boolean;
+  busyPercent: number;
+  setBy: string;
+  setAt: Date | null;
 }
 
-/**
- * A campus Point of Interest (POI)
- * Stored in Firestore 'places' collection
- */
 export interface Place {
   id: string;
   name: string;
   type: PlaceType;
   location: GeoPoint;
-  busyPercent: number;            // 0-100, computed by Cloud Function
-  lastUpdate: Date | null;        // When busyPercent was last calculated
-  adminOverride: AdminOverride | null; // Manual override set by admin, null if none
+  busyPercent: number;
+  lastUpdate: Date | null;
+  adminOverride: AdminOverride | null;
 }
 
-/**
- * Categories of campus places
- * LEARNING POINT: Union types restrict values to specific strings.
- * If you try to use 'restaurant' (not in the list), TypeScript errors.
- */
 export type PlaceType = 'dining hall' | 'library' | 'gym' | 'cafe' | 'food truck' | 'study' | 'the wall' | 'bagel' | 'restaurant';
 
-/**
- * Geographic coordinates
- * LEARNING POINT: Separating this into its own type makes it reusable
- * and documents that location always has this exact shape.
- */
 export interface GeoPoint {
   latitude: number;
   longitude: number;
 }
 
-/**
- * A user's check-in submission
- * Stored in Firestore 'checkins' collection
- */
 export interface CheckIn {
-  id: string;             // Firestore document ID (auto-generated on create)
-  placeId: string;         // References Place.id
-  level: BusyLevel;        // User's crowd assessment
-  timestamp: Date;         // Server-set timestamp
-  uid: string;             // Anonymous user ID (from Firebase Auth)
+  id: string;
+  placeId: string;
+  level: BusyLevel;
+  timestamp: Date;
+  uid: string;
 }
 
-/**
- * Crowd level options for check-in
- * 1 = not busy, 2 = moderate, 3 = very busy
- *
- * LEARNING POINT: Using a union of literal numbers (not just 'number')
- * ensures only valid values can be used. level = 5 would error.
- */
+/** 1 = not busy, 2 = moderate, 3 = very busy */
 export type BusyLevel = 1 | 2 | 3;
-
-/**
- * User's current location from device GPS
- * Used only in-memory, never sent to server
- */
 
 export interface LocationState {
   latitude: number;
   longitude: number;
-  accuracy: number | null; // GPS accuracy in meters (null if unknown)
-  timestamp: number;       // When this reading was taken
+  accuracy: number | null;
+  timestamp: number;
 }
 
-/**
- * Result of proximity calculation
- * Returned by the proximity service
- */
 export interface ProximityResult {
   place: Place;
-  distance: number;        // Distance in meters from user
-  isNearby: boolean;       // True if within check-in radius (50 meters)
+  distance: number;
+  isNearby: boolean;
 }
 
-/**
- * Location permission states
- * Maps to Expo Location permission responses
- */
 export type LocationPermissionStatus = 'granted' | 'denied' | 'undetermined';
 
-/**
- * Busyness color categories
- * Used for map markers and UI indicators
- */
 export type BusyColor = 'green' | 'yellow' | 'red';
 
-/**
- * Helper to get busy color from percentage
- * LEARNING POINT: This is a "pure function" - same input always gives same output,
- * no side effects. Pure functions are easy to test and reason about.
- */
 export function getBusyColor(percent: number): BusyColor {
   if (percent <= 30) return 'green';
   if (percent <= 60) return 'yellow';

@@ -1,11 +1,3 @@
-/**
- * LEARNING POINT: Custom Tab Bar
- *
- * Using tabBar: (props) => <FloatingTabBar {...props} /> replaces the default
- * full-width bar with a floating pill that sits above the bottom safe area.
- * Screen content can be edge-to-edge; the pill floats on top. Options like
- * tabBarActiveTintColor are still read by the custom component from descriptors.
- */
 import { Tabs } from 'expo-router';
 import Entypo from '@expo/vector-icons/Entypo';
 import Feather from '@expo/vector-icons/Feather';

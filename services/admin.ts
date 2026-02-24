@@ -1,41 +1,10 @@
-/**
- * Admin Service — manages admin authentication and place overrides
- *
- * LEARNING POINT: Service Layer Pattern
- *
- * This file is a "service" — it handles all Firestore interactions for
- * admin features. By isolating database calls here (instead of in
- * components or hooks), you get:
- *
- * 1. Testability — you can mock this file in tests without touching UI code
- * 2. Reusability — multiple hooks/screens can call the same service
- * 3. Single Responsibility — UI components don't know about Firestore
- *
- * LEARNING POINT: Atomic Updates with updateDoc
- *
- * When setting an override, we update both `busyPercent` and `adminOverride`
- * in a single `updateDoc` call. Firestore guarantees this is atomic — either
- * both fields update or neither does. This prevents an inconsistent state
- * where `busyPercent` is updated but `adminOverride` isn't (or vice versa).
- *
- * LEARNING POINT: deleteField() sentinel
- *
- * `deleteField()` is a special Firestore sentinel value. When passed to
- * `updateDoc`, it removes the field entirely from the document (instead of
- * setting it to null or undefined). This keeps your Firestore documents
- * clean — places without overrides simply won't have the field at all.
- */
-
 import { db } from '@/config/firebase';
 import { doc, getDoc, updateDoc, deleteField, serverTimestamp } from 'firebase/firestore';
 import { getCurrentUserUID } from '@/services/auth';
 
 /**
- * Checks whether the currently signed-in user is an admin.
- *
- * Reads the `config/admins` document and checks if the current UID
- * exists in the `uids` array. Returns false if the document doesn't
- * exist or the user isn't authenticated.
+ * Checks whether the given UID belongs to an admin.
+ * Reads the `config/admins` document and checks the `uids` array.
  */
 export async function checkIsAdmin(uid: string): Promise<boolean> {
     console.log('[Admin] Checking UID:', uid);
@@ -57,13 +26,8 @@ export async function checkIsAdmin(uid: string): Promise<boolean> {
 }
 
 /**
- * Sets an admin override on a place.
- *
- * Updates both `busyPercent` (so the UI reflects the override immediately)
- * and the `adminOverride` metadata (so the Cloud Function knows to skip it).
- *
- * @param placeId - Firestore document ID of the place
- * @param busyPercent - The admin-chosen busy level (0-100)
+ * Sets an admin override on a place, updating both `busyPercent` and the
+ * `adminOverride` metadata so the Cloud Function skips recalculation.
  */
 export async function setAdminOverride(placeId: string, busyPercent: number): Promise<void> {
     const uid = getCurrentUserUID();
@@ -83,13 +47,8 @@ export async function setAdminOverride(placeId: string, busyPercent: number): Pr
 }
 
 /**
- * Removes the admin override from a place.
- *
- * Uses `deleteField()` to completely remove the `adminOverride` field
- * from the Firestore document. The Cloud Function will resume computing
- * `busyPercent` from check-ins on its next run.
- *
- * @param placeId - Firestore document ID of the place
+ * Removes the admin override from a place, allowing the Cloud Function
+ * to resume computing `busyPercent` from check-ins.
  */
 export async function removeAdminOverride(placeId: string): Promise<void> {
     const placeRef = doc(db, 'places', placeId);

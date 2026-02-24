@@ -1,15 +1,3 @@
-/**
- * Place Detail Screen
- *
- * LEARNING POINT: Dynamic Routes in Expo Router
- *
- * The [id].tsx filename creates a dynamic route. The brackets tell Expo Router
- * that this segment is a parameter. So:
- * - /place/library-main -> id = "library-main"
- * - /place/gym-rec -> id = "gym-rec"
- *
- * Access the parameter with useLocalSearchParams().
- */
 import { View, Text, StyleSheet, ActivityIndicator, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -68,14 +56,6 @@ export default function PlaceScreen() {
     const { uid } = useAuth();
     const { checkIn, isOnCooldown, cooldownEndTime, isLoading: checkInLoading } = useCheckIn(id ?? null);
     const { isAdmin, setOverride, clearOverride } = useAdmin(uid);
-    /**
-     * LEARNING POINT: Safe Area Insets for Headerless Screens
-     *
-     * When headerShown is false, your content extends behind the status bar
-     * and notch. useSafeAreaInsets() gives the exact pixel offsets so you can
-     * position a floating back button and pad the hero content to stay clear
-     * of the notch on any device (iPhone SE vs Dynamic Island vs Android).
-     */
     const insets = useSafeAreaInsets();
 
     const backButtonScale = useSharedValue(1);
@@ -97,14 +77,6 @@ export default function PlaceScreen() {
 
     const canCheckIn = isNearby && hasGoodAccuracy && !isOnCooldown;
 
-    /**
-     * LEARNING POINT: Floating Back Button Pattern
-     *
-     * When you go headerless for full-screen layouts, you still need back
-     * navigation. A floating button with position: 'absolute' sits on top
-     * of any scrollable content. Extracting it as a variable avoids
-     * duplicating JSX across loading/error/success states.
-     */
     const floatingBackButton = (
         <Pressable
             style={[styles.floatingBackButton, { top: insets.top + SPACING[2] }]}
@@ -153,15 +125,12 @@ export default function PlaceScreen() {
         }
     }, [checkIn]);
 
-    const handleCooldownComplete = useCallback(() => {
-        // Could refresh state here, but the hook handles it
-    }, []);
+    const handleCooldownComplete = useCallback(() => {}, []);
 
     const backButtonAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: backButtonScale.value }],
     }));
 
-    // Loading state
     if (isLoading) {
         return (
             <View style={styles.container}>
@@ -173,7 +142,6 @@ export default function PlaceScreen() {
         );
     }
 
-    // Error state
     if (error || !place) {
         return (
             <View style={styles.container}>
@@ -206,14 +174,6 @@ export default function PlaceScreen() {
     return (
         <View style={styles.container}>
             <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.contentContainer}>
-                {/**
-                 * LEARNING POINT: Cherry-Cream Gradient Hero
-                 *
-                 * The hero uses SEMANTIC_COLORS.background.warm (#FFF5F6) — a
-                 * cherry-tinted cream — fading to white. This creates a blush
-                 * "warm blanket" at the top that draws the eye downward and
-                 * ties the header to the cherry color story.
-                 */}
                 <Animated.View entering={FadeInUp.duration(500)}>
                     <LinearGradient
                         colors={[SEMANTIC_COLORS.background.warm, COLORS.neutral[0]]}
@@ -225,7 +185,6 @@ export default function PlaceScreen() {
                         <Text style={styles.placeName}>{place.name}</Text>
                         <Text style={styles.placeType}>{place.type || 'Location'}</Text>
 
-                        {/* Hero busy indicator — emoji is the centerpiece */}
                         <View style={[styles.busyHero, { backgroundColor: busyStatus.lightBg }]}>
                             <Text style={styles.busyHeroEmoji}>{busyStatus.emoji}</Text>
                             <Text style={[styles.busyHeroLabel, { color: busyStatus.color }]}>
@@ -235,10 +194,8 @@ export default function PlaceScreen() {
                     </LinearGradient>
                 </Animated.View>
 
-                {/* Stale Data Warning */}
                 <StaleIndicator lastUpdate={place.lastUpdate} />
 
-                {/* Status Cards — consolidated into a cleaner single card */}
                 <Animated.View
                     entering={FadeInUp.duration(500).delay(200)}
                     style={styles.statusSection}
@@ -283,7 +240,6 @@ export default function PlaceScreen() {
                     )}
                 </Animated.View>
 
-                {/* Cooldown Timer */}
                 {isOnCooldown && cooldownEndTime && (
                     <Animated.View entering={FadeInUp.duration(500).delay(400)}>
                         <CooldownTimer
@@ -293,7 +249,6 @@ export default function PlaceScreen() {
                     </Animated.View>
                 )}
 
-                {/* Check-in Buttons */}
                 <Animated.View
                     entering={FadeInUp.duration(500).delay(600)}
                     style={styles.buttonsSection}
@@ -305,10 +260,8 @@ export default function PlaceScreen() {
                     />
                 </Animated.View>
 
-                {/* Admin Override Panel — only visible to admins */}
                 {isAdmin && (
                     <Animated.View entering={FadeInUp.duration(500).delay(800)}>
-                        {/* Subtle divider before admin section */}
                         <View style={styles.adminDivider} />
                         <AdminOverridePanel
                             placeId={id!}
@@ -396,14 +349,6 @@ const styles = StyleSheet.create({
         marginBottom: SPACING[3],
         textTransform: 'capitalize',
     },
-    /**
-     * LEARNING POINT: Hero Busy Indicator
-     *
-     * Making the busy percentage the visual centerpiece of the detail screen
-     * gives users the information they came for immediately. The 5xl font
-     * size creates a strong focal point, while the stacked label below
-     * adds context. Wrapping in a tinted pill keeps it contained.
-     */
     busyHero: {
         alignItems: 'center',
         paddingHorizontal: SPACING[5],
@@ -477,15 +422,6 @@ const styles = StyleSheet.create({
         marginHorizontal: SPACING[6],
         marginTop: SPACING[4],
     },
-    /**
-     * LEARNING POINT: Floating Action Button for Navigation
-     *
-     * position: 'absolute' takes the button out of the normal layout flow,
-     * so it floats above the ScrollView and stays fixed while scrolling.
-     * The `top` is set inline (insets.top + SPACING[2]) to adapt to
-     * each device's safe area. The white circle + shadow makes it clearly
-     * tappable without clashing with content behind it.
-     */
     floatingBackButton: {
         position: 'absolute',
         left: SPACING[4],

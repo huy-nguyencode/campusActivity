@@ -25,18 +25,8 @@ interface CooldownTimerProps {
     onComplete?: () => void;
 }
 
-/**
- * LEARNING POINT: Circular Progress Indicator
- *
- * We use SVG to create a circular progress ring. The key concepts:
- * 1. strokeDasharray - creates dashes in the stroke
- * 2. strokeDashoffset - moves the start of the dash pattern
- *
- * By setting dasharray to the circumference and animating dashoffset
- * from circumference to 0, we create a fill-up effect.
- */
 const CIRCLE_SIZE = 120;
-const STROKE_WIDTH = 10; // Slightly thicker for warmth
+const STROKE_WIDTH = 10;
 const RADIUS_VALUE = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS_VALUE;
 
@@ -52,13 +42,6 @@ export function CooldownTimer({ endTime, onComplete }: CooldownTimerProps) {
 
     const pulseScale = useSharedValue(1);
 
-    /**
-     * LEARNING POINT: Gentler Pulse Animation
-     *
-     * The Cherry theme uses a subtler pulse (1.03 vs 1.05) with a slower
-     * cycle (1200ms vs 1000ms) for a calmer, more refined breathing effect.
-     * The timer should feel patient, not anxious.
-     */
     useEffect(() => {
         pulseScale.value = withRepeat(
             withSequence(
@@ -104,19 +87,10 @@ export function CooldownTimer({ endTime, onComplete }: CooldownTimerProps) {
     const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
 
     return (
-        /**
-         * LEARNING POINT: Warm Card Wrapper for Timers
-         *
-         * Wrapping the cooldown timer in a warm-tinted card (accent-50 bg)
-         * makes it feel like part of the design rather than a bare UI element
-         * floating in space. The context text above ("You can check in again in...")
-         * sets expectations and reduces user anxiety about the wait.
-         */
         <View style={styles.cardWrapper}>
             <Text style={styles.contextText}>You can check in again in...</Text>
             <View style={styles.container}>
                 <Animated.View style={[styles.circleContainer, pulseStyle]}>
-                    {/* Background circle — softer track color */}
                     <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE} style={styles.svg}>
                         <Circle
                             cx={CIRCLE_SIZE / 2}
@@ -126,7 +100,6 @@ export function CooldownTimer({ endTime, onComplete }: CooldownTimerProps) {
                             strokeWidth={STROKE_WIDTH}
                             fill="none"
                         />
-                        {/* Progress circle */}
                         <Circle
                             cx={CIRCLE_SIZE / 2}
                             cy={CIRCLE_SIZE / 2}
@@ -141,7 +114,6 @@ export function CooldownTimer({ endTime, onComplete }: CooldownTimerProps) {
                         />
                     </Svg>
 
-                    {/* Timer display in center */}
                     <View style={styles.timerContent}>
                         <Text style={styles.time}>{formatTime(remaining)}</Text>
                         <Text style={styles.label}>cooldown</Text>
