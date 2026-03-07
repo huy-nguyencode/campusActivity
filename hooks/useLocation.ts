@@ -1,78 +1,188 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import * as Location from 'expo-location';
 import { LocationState, LocationPermissionStatus } from '@/types';
 import { checkLocationPermission, requestLocationPermission, watchLocation } from '@/services/location';
 
-export function useLocation() {
-    const [location, setLocation] = useState<LocationState | null>(null);
-    const [permission, setPermission] = useState<LocationPermissionStatus>('undetermined');
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+interface LocationSnapshot {
+    location: LocationState | null;
+    permission: LocationPermissionStatus;
+    isLoading: boolean;
+    error: string | null;
+}
 
-    useEffect(() => {
-        const checkPermission = async () => {
-            try {
-                setIsLoading(true);
-                const status = await checkLocationPermission();
-                setPermission(status);
-                if (status !== 'granted') {
-                    setIsLoading(false);
-                }
-            } catch (error) {
-                setError((error as Error).message);
-                setPermission('undetermined');
-                setIsLoading(false);
-            }
+let locationSnapshot: LocationSnapshot = {
+    location: null,
+    permission: 'undetermined',
+    isLoading: true,
+    error: null,
+};
+
+const listeners = new Set<() => void>();
+let locationSubscription: Location.LocationSubscription | null = null;
+let permissionCheckPromise: Promise<void> | null = null;
+let locationWatchPromise: Promise<void> | null = null;
+
+function emitChange() {
+    listeners.forEach((listener) => listener());
+}
+
+function stopLocationWatcher() {
+    if (locationSubscription) {
+        locationSubscription.remove();
+        locationSubscription = null;
+    }
+}
+
+function updatePermissionState(permission: LocationPermissionStatus) {
+    if (permission === 'denied') {
+        stopLocationWatcher();
+        locationSnapshot = {
+            ...locationSnapshot,
+            permission,
+            location: null,
+            error: 'Location permission denied',
+            isLoading: false,
         };
+        emitChange();
+        return;
+    }
 
-        checkPermission();
-    }, []);
+    locationSnapshot = {
+        ...locationSnapshot,
+        permission,
+        error: null,
+        isLoading: permission === 'granted' && !locationSnapshot.location,
+    };
+    emitChange();
 
-    useEffect(() => {
-        let subscription: Location.LocationSubscription | null = null;
+    if (permission !== 'granted') {
+        stopLocationWatcher();
+    }
+}
 
-        if (permission === 'granted') {
-            const startWatching = async () => {
-                try {
-                    setIsLoading(true);
-                    subscription = await watchLocation((newLocation: LocationState) => {
-                        setLocation(newLocation);
-                        setError(null);
-                        setIsLoading(false);
-                    });
-                } catch (error) {
-                    setError((error as Error).message);
-                    setLocation(null);
-                    setIsLoading(false);
-                }
-            };
-            startWatching();
-        } else if (permission === 'denied') {
-            setError('Location permission denied');
-            setLocation(null);
-            setIsLoading(false);
-        } else {
-            setIsLoading(false);
-        }
+async function ensureLocationWatcher() {
+    if (locationSnapshot.permission !== 'granted' || locationSubscription || locationWatchPromise || listeners.size === 0) {
+        return;
+    }
 
-        return () => {
-            if (subscription) {
+    locationSnapshot = {
+        ...locationSnapshot,
+        isLoading: !locationSnapshot.location,
+    };
+    emitChange();
+
+    locationWatchPromise = watchLocation((nextLocation: LocationState) => {
+        locationSnapshot = {
+            location: nextLocation,
+            permission: locationSnapshot.permission,
+            isLoading: false,
+            error: null,
+        };
+        emitChange();
+    })
+        .then((subscription) => {
+            if (listeners.size === 0 || locationSnapshot.permission !== 'granted') {
                 subscription.remove();
+                return;
             }
-        };
-    }, [permission]);
+
+            locationSubscription = subscription;
+        })
+        .catch((error) => {
+            locationSnapshot = {
+                ...locationSnapshot,
+                location: null,
+                isLoading: false,
+                error: (error as Error).message,
+            };
+            emitChange();
+        })
+        .finally(() => {
+            locationWatchPromise = null;
+        });
+}
+
+async function ensurePermissionChecked() {
+    if (permissionCheckPromise) {
+        return permissionCheckPromise;
+    }
+
+    permissionCheckPromise = (async () => {
+        try {
+            locationSnapshot = {
+                ...locationSnapshot,
+                isLoading: true,
+            };
+            emitChange();
+
+            const permission = await checkLocationPermission();
+            updatePermissionState(permission);
+
+            if (permission === 'granted') {
+                await ensureLocationWatcher();
+            }
+        } catch (error) {
+            locationSnapshot = {
+                location: null,
+                permission: 'undetermined',
+                isLoading: false,
+                error: (error as Error).message,
+            };
+            emitChange();
+        } finally {
+            permissionCheckPromise = null;
+        }
+    })();
+
+    return permissionCheckPromise;
+}
+
+function subscribe(listener: () => void) {
+    listeners.add(listener);
+    void ensurePermissionChecked();
+
+    if (locationSnapshot.permission === 'granted') {
+        void ensureLocationWatcher();
+    }
+
+    return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) {
+            stopLocationWatcher();
+        }
+    };
+}
+
+function getSnapshot() {
+    return locationSnapshot;
+}
+
+export function useLocation() {
+    const { location, permission, isLoading, error } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
     const requestPermission = useCallback(async () => {
         try {
-            setIsLoading(true);
-            const status = await requestLocationPermission();
-            setPermission(status);
-            setIsLoading(false);
-            setError(null);
+            locationSnapshot = {
+                ...locationSnapshot,
+                isLoading: true,
+                error: null,
+            };
+            emitChange();
+
+            const permission = await requestLocationPermission();
+            updatePermissionState(permission);
+
+            if (permission === 'granted') {
+                await ensureLocationWatcher();
+            }
         } catch (error) {
-            setError((error as Error).message);
-            setPermission('undetermined');
-            setIsLoading(false);
+            locationSnapshot = {
+                location: null,
+                permission: 'undetermined',
+                isLoading: false,
+                error: (error as Error).message,
+            };
+            emitChange();
         }
     }, []);
 

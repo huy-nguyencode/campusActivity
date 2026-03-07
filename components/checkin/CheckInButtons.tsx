@@ -125,7 +125,7 @@ export function CheckInButtons({ onCheckIn, disabled = false, isLoading = false 
     return (
         <View style={styles.outerContainer}>
             <View style={styles.cardContainer}>
-                <Text style={styles.promptText}>How's it looking?</Text>
+                <Text style={styles.promptText}>How&apos;s it looking?</Text>
                 <View style={styles.emojiRow}>
                     {BUSY_LEVELS.map(({ level, emoji, label, bgColor, textColor }) => (
                         <BusyButton

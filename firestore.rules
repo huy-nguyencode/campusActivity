@@ -89,16 +89,14 @@ service cloud.firestore {
      * If validation fails, the write is rejected with permission-denied.
      */
     match /checkins/{checkinId} {
-      // Read: Only allow if authenticated (optional, could be false)
-      // We allow read so users could potentially see their own history
-      allow read: if request.auth != null;
+      // Check-ins are now written via a callable Cloud Function so the
+      // cooldown can be enforced server-side. Clients no longer need direct
+      // read/write access here.
+      allow read, create, update, delete: if false;
+    }
 
-      // Create: Authenticated users with valid data
-      allow create: if isAuthenticated()
-                    && isValidCheckIn();
-
-      // No updates or deletes allowed
-      allow update, delete: if false;
+    match /checkinCooldowns/{docId} {
+      allow read, write: if false;
     }
 
     /**
@@ -148,35 +146,6 @@ service cloud.firestore {
      */
     function onlyAffects(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
-    }
-
-    // Validate check-in document structure and values
-    function isValidCheckIn() {
-      let data = request.resource.data;
-
-      // Required fields must exist
-      let hasRequiredFields = data.keys().hasAll(['placeId', 'level', 'timestamp', 'uid']);
-
-      // UID must match the authenticated user (can't check in as someone else)
-      let uidMatches = data.uid == request.auth.uid;
-
-      // Level must be 1, 2, or 3
-      let validLevel = data.level is int && data.level >= 1 && data.level <= 3;
-
-      // PlaceId must be a non-empty string
-      let validPlaceId = data.placeId is string && data.placeId.size() > 0;
-
-      // Timestamp should be a timestamp type
-      let validTimestamp = data.timestamp is timestamp;
-
-      // Optional: Verify the place exists (costs an extra read)
-      // let placeExists = exists(/databases/$(database)/documents/places/$(data.placeId));
-
-      return hasRequiredFields
-          && uidMatches
-          && validLevel
-          && validPlaceId
-          && validTimestamp;
     }
 
     /**

@@ -7,20 +7,13 @@ import { getCurrentUserUID } from '@/services/auth';
  * Reads the `config/admins` document and checks the `uids` array.
  */
 export async function checkIsAdmin(uid: string): Promise<boolean> {
-    console.log('[Admin] Checking UID:', uid);
-
     const adminsRef = doc(db, 'config', 'admins');
     const adminsSnap = await getDoc(adminsRef);
-
-    console.log('[Admin] admins doc exists:', adminsSnap.exists());
 
     if (!adminsSnap.exists()) return false;
 
     const data = adminsSnap.data();
     const uids = data?.uids as string[] | undefined;
-
-    console.log('[Admin] Admin UIDs from Firestore:', uids);
-    console.log('[Admin] Is admin:', Array.isArray(uids) && uids.includes(uid));
 
     return Array.isArray(uids) && uids.includes(uid);
 }

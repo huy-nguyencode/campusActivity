@@ -8,7 +8,6 @@ import {
     FONT_SIZES,
     SPACING,
     RADIUS,
-    SHADOWS,
     SEMANTIC_COLORS,
 } from '@/constants/theme';
 
