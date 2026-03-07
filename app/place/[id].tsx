@@ -44,6 +44,7 @@ const PLACE_TYPE_ICONS: Record<string, string> = {
     'the wall': '🍴',
     'bagel': '🥯',
     'restaurant': '🍴',
+    'default': '📍',
 };
 
 export default function PlaceScreen() {

@@ -1,8 +1,10 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 
 admin.initializeApp();
 const db = admin.firestore();
+const MAX_BATCH_OPERATIONS = 500;
 
 const CONFIG = {
     CHECKIN_WINDOW_MINUTES: 90,
@@ -21,12 +23,25 @@ interface CheckInDoc {
     uid: string;
 }
 
+interface PlaceAggregationInput {
+    level: number;
+    timestamp: admin.firestore.Timestamp;
+}
+
+interface PlaceDocData {
+    busyPercent?: number;
+    lastUpdate?: admin.firestore.Timestamp;
+    adminOverride?: {
+        active?: boolean;
+    };
+}
+
 function calculateDecayWeight(ageMinutes: number): number {
     return Math.pow(0.5, ageMinutes / CONFIG.HALF_LIFE_MINUTES);
 }
 
 function calculateBusyPercent(
-    checkIns: Array<{ level: number; timestamp: admin.firestore.Timestamp }>,
+    checkIns: PlaceAggregationInput[],
     now: Date
 ): number {
     if (checkIns.length === 0) return 0;
@@ -51,6 +66,143 @@ function calculateBusyPercent(
 
     return Math.round(weightedSum / totalWeight);
 }
+
+function getLatestTimestamp(checkIns: PlaceAggregationInput[]): admin.firestore.Timestamp | null {
+    if (checkIns.length === 0) {
+        return null;
+    }
+
+    return checkIns
+        .slice(1)
+        .reduce(
+            (latest, current) => (
+                current.timestamp.toMillis() > latest.toMillis() ? current.timestamp : latest
+            ),
+            checkIns[0].timestamp
+        );
+}
+
+function timestampsEqual(
+    left: admin.firestore.Timestamp | null | undefined,
+    right: admin.firestore.Timestamp | null | undefined
+): boolean {
+    if (!left && !right) {
+        return true;
+    }
+
+    if (!left || !right) {
+        return false;
+    }
+
+    return left.toMillis() === right.toMillis();
+}
+
+function buildPlaceUpdate(
+    placeData: PlaceDocData,
+    placeCheckIns: PlaceAggregationInput[],
+    now: Date
+): Record<string, unknown> | null {
+    const nextBusyPercent = calculateBusyPercent(placeCheckIns, now);
+    const nextLastUpdate = getLatestTimestamp(placeCheckIns);
+    const currentBusyPercent = typeof placeData.busyPercent === 'number' ? placeData.busyPercent : 0;
+    const currentLastUpdate = placeData.lastUpdate ?? null;
+
+    if (currentBusyPercent === nextBusyPercent && timestampsEqual(currentLastUpdate, nextLastUpdate)) {
+        return null;
+    }
+
+    return {
+        busyPercent: nextBusyPercent,
+        lastUpdate: nextLastUpdate ?? admin.firestore.FieldValue.delete(),
+    };
+}
+
+async function commitInChunks(
+    updates: Array<{
+        ref: admin.firestore.DocumentReference;
+        data: Record<string, unknown>;
+    }>
+): Promise<void> {
+    for (let start = 0; start < updates.length; start += MAX_BATCH_OPERATIONS) {
+        const batch = db.batch();
+        const chunk = updates.slice(start, start + MAX_BATCH_OPERATIONS);
+
+        for (const update of chunk) {
+            batch.update(update.ref, update.data);
+        }
+
+        await batch.commit();
+    }
+}
+
+export const submitCheckin = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'You must be signed in to check in.');
+    }
+
+    const { placeId, level } = request.data as { placeId?: unknown; level?: unknown };
+
+    if (typeof placeId !== 'string' || placeId.trim().length === 0) {
+        throw new HttpsError('invalid-argument', 'A valid place ID is required.');
+    }
+
+    if (level !== 1 && level !== 2 && level !== 3) {
+        throw new HttpsError('invalid-argument', 'Busy level must be 1, 2, or 3.');
+    }
+
+    const uid = request.auth.uid;
+    const normalizedPlaceId = placeId.trim();
+    const cooldownRef = db.collection('checkinCooldowns').doc(`${uid}_${normalizedPlaceId}`);
+    const placeRef = db.collection('places').doc(normalizedPlaceId);
+    const checkInRef = db.collection('checkins').doc();
+    const now = admin.firestore.Timestamp.now();
+    const cooldownEndsAt = admin.firestore.Timestamp.fromMillis(
+        now.toMillis() + CONFIG.CHECKIN_WINDOW_MINUTES * 60 * 1000
+    );
+
+    await db.runTransaction(async (transaction) => {
+        const [placeSnap, cooldownSnap] = await Promise.all([
+            transaction.get(placeRef),
+            transaction.get(cooldownRef),
+        ]);
+
+        if (!placeSnap.exists) {
+            throw new HttpsError('not-found', 'Place not found.');
+        }
+
+        const lastCheckInAt = cooldownSnap.get('lastCheckInAt') as admin.firestore.Timestamp | undefined;
+        if (lastCheckInAt) {
+            const lastAllowedAt = lastCheckInAt.toMillis() + CONFIG.CHECKIN_WINDOW_MINUTES * 60 * 1000;
+            if (lastAllowedAt > now.toMillis()) {
+                throw new HttpsError('failed-precondition', 'Cooldown active.', {
+                    cooldownEndsAt: new Date(lastAllowedAt).toISOString(),
+                });
+            }
+        }
+
+        transaction.set(checkInRef, {
+            placeId: normalizedPlaceId,
+            level,
+            timestamp: now,
+            uid,
+        });
+
+        transaction.set(cooldownRef, {
+            uid,
+            placeId: normalizedPlaceId,
+            lastCheckInAt: now,
+            cooldownEndsAt,
+        });
+    });
+
+    return {
+        id: checkInRef.id,
+        placeId: normalizedPlaceId,
+        level,
+        timestamp: now.toDate().toISOString(),
+        uid,
+    };
+});
 
 export const aggregateBusyPercent = onSchedule(
     {
@@ -80,7 +232,7 @@ export const aggregateBusyPercent = onSchedule(
 
             console.log(`Found ${checkInsSnapshot.size} recent check-ins`);
 
-            const checkInsByPlace = new Map<string, Array<{ level: number; timestamp: admin.firestore.Timestamp }>>();
+            const checkInsByPlace = new Map<string, PlaceAggregationInput[]>();
 
             checkInsSnapshot.forEach((doc) => {
                 const data = doc.data() as CheckInDoc;
@@ -93,32 +245,44 @@ export const aggregateBusyPercent = onSchedule(
                 });
             });
 
-            const batch = db.batch();
-            let updateCount = 0;
+            const updates: Array<{
+                ref: admin.firestore.DocumentReference;
+                data: Record<string, unknown>;
+            }> = [];
 
             placesSnapshot.forEach((placeDoc) => {
                 const placeId = placeDoc.id;
+                const placeData = placeDoc.data() as PlaceDocData;
 
                 // Skip places with active admin overrides.
-                if (placeDoc.data().adminOverride?.active === true) {
+                if (placeData.adminOverride?.active === true) {
                     console.log(`Place ${placeId}: admin override active, skipping`);
                     return;
                 }
 
                 const placeCheckIns = checkInsByPlace.get(placeId) || [];
-                const busyPercent = calculateBusyPercent(placeCheckIns, now);
+                const placeUpdate = buildPlaceUpdate(placeData, placeCheckIns, now);
 
-                batch.update(placeDoc.ref, {
-                    busyPercent,
-                    lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+                if (!placeUpdate) {
+                    console.log(`Place ${placeId}: unchanged, skipping write`);
+                    return;
+                }
+
+                updates.push({
+                    ref: placeDoc.ref,
+                    data: placeUpdate,
                 });
-                updateCount++;
 
-                console.log(`Place ${placeId}: ${placeCheckIns.length} check-ins -> ${busyPercent}%`);
+                console.log(`Place ${placeId}: ${placeCheckIns.length} check-ins -> queued update`);
             });
 
-            await batch.commit();
-            console.log(`Successfully updated ${updateCount} places`);
+            if (updates.length === 0) {
+                console.log('No place changes detected, skipping writes');
+                return;
+            }
+
+            await commitInChunks(updates);
+            console.log(`Successfully updated ${updates.length} places`);
 
         } catch (error) {
             console.error('Error during aggregation:', error);

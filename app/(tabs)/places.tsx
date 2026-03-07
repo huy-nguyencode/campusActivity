@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePlaces } from '@/hooks/usePlaces';
 import { Place } from '@/types';
@@ -20,6 +20,10 @@ export default function PlacesScreen() {
     const { places, isLoading, error, refresh } = usePlaces();
     const [refreshing, setRefreshing] = useState(false);
     const insets = useSafeAreaInsets();
+    const sortedPlaces = useMemo(
+        () => [...places].sort((a, b) => a.name.localeCompare(b.name)),
+        [places]
+    );
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -67,7 +71,7 @@ export default function PlacesScreen() {
             style={styles.container}
         >
             <FlatList
-                data={[...places.sort((a, b) => a.name.localeCompare(b.name))]}
+                data={sortedPlaces}
                 keyExtractor={(item) => item.id}
                 renderItem={renderPlace}
                 contentContainerStyle={[styles.listContainer, { paddingTop: insets.top + SPACING[4] }]}
@@ -86,7 +90,7 @@ export default function PlacesScreen() {
                             <Text style={styles.emptyIcon}>🏫</Text>
                             <Text style={styles.emptyText}>No places yet</Text>
                             <Text style={styles.emptyHint}>
-                                Campus spots will appear here once they're added. Check back soon!
+                                Campus spots will appear here once they&apos;re added. Check back soon!
                             </Text>
                         </View>
                     </View>

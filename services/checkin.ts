@@ -1,9 +1,21 @@
-import { db } from '@/config/firebase';
-import { collection, addDoc, serverTimestamp, getDoc, doc, Timestamp } from 'firebase/firestore';
+import { functions } from '@/config/firebase';
+import { httpsCallable } from 'firebase/functions';
 import { CheckIn, BusyLevel } from '@/types';
 import { CONFIG } from '@/constants/config';
 import { getCurrentUserUID } from '@/services/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface SubmitCheckinResponse {
+    id: string;
+    placeId: string;
+    level: BusyLevel;
+    timestamp: string;
+    uid: string;
+}
+
+interface CooldownDetails {
+    cooldownEndsAt?: string;
+}
 
 export async function submitCheckin(placeId: string, level: BusyLevel): Promise<CheckIn | null> {
     const uid = await getCurrentUserUID();
@@ -12,35 +24,35 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
     if (await isOnCoolDown(placeId)) return null;
 
     try {
-        const checkInRef = await addDoc(collection(db, 'checkins'), {
-            placeId,
-            level,
-            timestamp: serverTimestamp(),
-            uid,
-        });
+        const submitCheckinCall = httpsCallable<{ placeId: string; level: BusyLevel }, SubmitCheckinResponse>(
+            functions,
+            'submitCheckin'
+        );
 
-        await setCooldown(placeId);
+        const response = await submitCheckinCall({ placeId, level });
+        const timestampDate = new Date(response.data.timestamp);
 
-        const checkInDoc = await getDoc(checkInRef);
-        if (!checkInDoc.exists()) {
-            console.error('Check-in document not found after creation');
-            return null;
-        }
-
-        const data = checkInDoc.data();
-        const timestampValue = data.timestamp;
-        const timestampDate = timestampValue instanceof Timestamp
-            ? timestampValue.toDate()
-            : new Date(timestampValue);
+        await setCooldown(placeId, timestampDate);
 
         return {
-            id: checkInRef.id,
-            placeId,
-            level,
+            id: response.data.id,
+            placeId: response.data.placeId,
+            level: response.data.level,
             timestamp: timestampDate,
-            uid,
+            uid: response.data.uid,
         };
     } catch (error) {
+        const functionError = error as Error & { code?: string; details?: CooldownDetails };
+
+        if (functionError.code === 'functions/failed-precondition') {
+            const cooldownEndsAt = functionError.details?.cooldownEndsAt;
+            if (cooldownEndsAt) {
+                const cooldownEndDate = new Date(cooldownEndsAt);
+                const lastCheckInDate = new Date(cooldownEndDate.getTime() - CONFIG.CHECK_IN_COOLDOWN * 60000);
+                await setCooldown(placeId, lastCheckInDate);
+            }
+        }
+
         console.error('Error submitting check-in:', error);
         return null;
     }
@@ -65,10 +77,10 @@ export async function isOnCoolDown(placeId: string): Promise<boolean> {
     }
 }
 
-async function setCooldown(placeId: string): Promise<void> {
+async function setCooldown(placeId: string, lastCheckInAt: Date = new Date()): Promise<void> {
     try {
         const storageKey = getCooldownStorageKey(placeId);
-        await AsyncStorage.setItem(storageKey, new Date().toISOString());
+        await AsyncStorage.setItem(storageKey, lastCheckInAt.toISOString());
     } catch (error) {
         console.error('Error setting cooldown:', error);
     }
