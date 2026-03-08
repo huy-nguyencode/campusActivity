@@ -9,14 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.huynguyen.campusspots",
-      "buildNumber": "1",
+      "buildNumber": "4",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": []
       },
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Campus Spots uses your location to show nearby places and let you check in."
+        "NSLocationWhenInUseUsageDescription": "Campus Spots uses your location to show nearby places and let you check in.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -30,7 +31,9 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -62,6 +65,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "be5c0765-7539-4c35-a8d4-040dd23f55d4"
+      }
+    },
+    "owner": "huyngexpo"
   }
 }

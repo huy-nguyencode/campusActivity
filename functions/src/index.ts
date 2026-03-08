@@ -135,7 +135,12 @@ async function commitInChunks(
     }
 }
 
-export const submitCheckin = onCall(async (request) => {
+export const submitCheckin = onCall({
+    region: 'us-central1',
+    memory: '256MiB',
+    timeoutSeconds: 15,
+    maxInstances: 5,
+}, async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'You must be signed in to check in.');
     }
@@ -209,6 +214,10 @@ export const aggregateBusyPercent = onSchedule(
         schedule: 'every 5 minutes',
         timeZone: 'America/New_York',
         retryCount: 3,
+        region: 'us-central1',
+        memory: '256MiB',
+        timeoutSeconds: 60,
+        maxInstances: 1,
     },
     async () => {
         console.log('Starting busy percent aggregation...');
@@ -250,13 +259,16 @@ export const aggregateBusyPercent = onSchedule(
                 data: Record<string, unknown>;
             }> = [];
 
+            let changedPlaces = 0;
+            let skippedForAdminOverride = 0;
+
             placesSnapshot.forEach((placeDoc) => {
                 const placeId = placeDoc.id;
                 const placeData = placeDoc.data() as PlaceDocData;
 
                 // Skip places with active admin overrides.
                 if (placeData.adminOverride?.active === true) {
-                    console.log(`Place ${placeId}: admin override active, skipping`);
+                    skippedForAdminOverride += 1;
                     return;
                 }
 
@@ -264,7 +276,6 @@ export const aggregateBusyPercent = onSchedule(
                 const placeUpdate = buildPlaceUpdate(placeData, placeCheckIns, now);
 
                 if (!placeUpdate) {
-                    console.log(`Place ${placeId}: unchanged, skipping write`);
                     return;
                 }
 
@@ -272,17 +283,19 @@ export const aggregateBusyPercent = onSchedule(
                     ref: placeDoc.ref,
                     data: placeUpdate,
                 });
-
-                console.log(`Place ${placeId}: ${placeCheckIns.length} check-ins -> queued update`);
+                changedPlaces += 1;
             });
 
             if (updates.length === 0) {
-                console.log('No place changes detected, skipping writes');
+                console.log(`No place changes detected. overrides=${skippedForAdminOverride}`);
                 return;
             }
 
             await commitInChunks(updates);
-            console.log(`Successfully updated ${updates.length} places`);
+            console.log(
+                `Aggregation complete. places=${placesSnapshot.size} recentCheckins=${checkInsSnapshot.size} ` +
+                `updated=${changedPlaces} overrides=${skippedForAdminOverride}`
+            );
 
         } catch (error) {
             console.error('Error during aggregation:', error);
