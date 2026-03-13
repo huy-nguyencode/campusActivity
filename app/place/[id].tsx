@@ -51,11 +51,17 @@ export default function PlaceScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const [place, setPlace] = useState<Place | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [placeError, setPlaceError] = useState<string | null>(null);
 
     const { location } = useLocation();
-    const { uid } = useAuth();
-    const { checkIn, isOnCooldown, cooldownEndTime, isLoading: checkInLoading } = useCheckIn(id ?? null);
+    const { uid, isLoading: authLoading } = useAuth();
+    const {
+        checkIn,
+        isOnCooldown,
+        cooldownEndTime,
+        isLoading: checkInLoading,
+        error: checkInError,
+    } = useCheckIn(id ?? null);
     const { isAdmin, setOverride, clearOverride } = useAdmin(uid);
     const insets = useSafeAreaInsets();
 
@@ -76,7 +82,7 @@ export default function PlaceScreen() {
         ? location.accuracy <= CONFIG.MINIMUM_ACCURACY_TO_CHECK_IN
         : false;
 
-    const canCheckIn = isNearby && hasGoodAccuracy && !isOnCooldown;
+    const canCheckIn = isNearby && hasGoodAccuracy && !isOnCooldown && !!uid && !authLoading;
 
     const floatingBackButton = (
         <Pressable
@@ -91,13 +97,13 @@ export default function PlaceScreen() {
 
     useEffect(() => {
         if (!id) {
-            setError('No place ID provided');
+            setPlaceError('No place ID provided');
             setIsLoading(false);
             return;
         }
 
         setIsLoading(true);
-        setError(null);
+        setPlaceError(null);
 
         const unsubscribe = subscribePlace(
             id,
@@ -105,13 +111,13 @@ export default function PlaceScreen() {
                 if (fetchedPlace) {
                     setPlace(fetchedPlace);
                 } else {
-                    setError('Place not found');
+                    setPlaceError('Place not found');
                 }
                 setIsLoading(false);
             },
             (err) => {
                 console.error('Error subscribing to place:', err);
-                setError('Failed to load place');
+                setPlaceError('Failed to load place');
                 setIsLoading(false);
             }
         );
@@ -143,12 +149,12 @@ export default function PlaceScreen() {
         );
     }
 
-    if (error || !place) {
+    if (placeError || !place) {
         return (
             <View style={styles.container}>
                 <View style={styles.centered}>
                     <Text style={styles.errorIcon}>😕</Text>
-                    <Text style={styles.errorText}>{error || 'Place not found'}</Text>
+                    <Text style={styles.errorText}>{placeError || 'Place not found'}</Text>
                     <AnimatedPressable
                         style={[styles.backButton, backButtonAnimatedStyle]}
                         onPress={() => router.back()}
@@ -254,6 +260,15 @@ export default function PlaceScreen() {
                     entering={FadeInUp.duration(500).delay(600)}
                     style={styles.buttonsSection}
                 >
+                    {authLoading && (
+                        <Text style={styles.helperText}>Signing you in...</Text>
+                    )}
+                    {!authLoading && !uid && (
+                        <Text style={styles.helperText}>Sign-in failed. Please try again.</Text>
+                    )}
+                    {checkInError && (
+                        <Text style={styles.helperText}>{checkInError}</Text>
+                    )}
                     <CheckInButtons
                         onCheckIn={handleCheckIn}
                         disabled={!canCheckIn}
@@ -416,6 +431,13 @@ const styles = StyleSheet.create({
     },
     buttonsSection: {
         marginTop: SPACING[2],
+    },
+    helperText: {
+        fontSize: FONT_SIZES.sm,
+        fontFamily: FONTS.body.semiBold,
+        color: COLORS.neutral[700],
+        textAlign: 'center',
+        marginBottom: SPACING[3],
     },
     adminDivider: {
         height: 1,

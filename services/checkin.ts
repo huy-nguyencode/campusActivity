@@ -2,7 +2,7 @@ import { functions } from '@/config/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { CheckIn, BusyLevel } from '@/types';
 import { CONFIG } from '@/constants/config';
-import { getCurrentUserUID } from '@/services/auth';
+import { getCurrentUserUID, signInAnon } from '@/services/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface SubmitCheckinResponse {
@@ -18,8 +18,19 @@ interface CooldownDetails {
 }
 
 export async function submitCheckin(placeId: string, level: BusyLevel): Promise<CheckIn | null> {
-    const uid = await getCurrentUserUID();
-    if (!uid) return null;
+    let uid = await getCurrentUserUID();
+    if (!uid) {
+        try {
+            await signInAnon();
+            uid = await getCurrentUserUID();
+        } catch (error) {
+            console.error('Error signing in anonymously:', error);
+        }
+    }
+
+    if (!uid) {
+        throw new Error('Not authenticated. Please try again.');
+    }
 
     if (await isOnCoolDown(placeId)) return null;
 
@@ -51,10 +62,11 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
                 const lastCheckInDate = new Date(cooldownEndDate.getTime() - CONFIG.CHECK_IN_COOLDOWN * 60000);
                 await setCooldown(placeId, lastCheckInDate);
             }
+            return null;
         }
 
         console.error('Error submitting check-in:', error);
-        return null;
+        throw error;
     }
 }
 

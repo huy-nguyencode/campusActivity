@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.huynguyen.campusspots",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": []
       },
