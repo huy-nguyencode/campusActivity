@@ -1,5 +1,5 @@
 import { Place, LocationState, ProximityResult } from '@/types';
-import { haversineDistance } from '@/utils/haversine';
+import { haversineDistance } from '@/utils/distance';
 import { CONFIG } from '@/constants/config';
 
 function calculateProximity(place: Place, locationState: LocationState): ProximityResult {

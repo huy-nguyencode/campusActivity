@@ -9,10 +9,10 @@
  * 3. Production - load initial required data
  *
  * Usage:
- *   npx ts-node scripts/seedPlaces.ts
+ *   npx ts-node scripts/seedPlaceCollection.ts
  *
  * Or with emulator:
- *   FIRESTORE_EMULATOR_HOST=localhost:8080 npx ts-node scripts/seedPlaces.ts
+ *   FIRESTORE_EMULATOR_HOST=localhost:8080 npx ts-node scripts/seedPlaceCollection.ts
  *
  * LEARNING POINT: TypeScript Execution
  *
@@ -128,8 +128,8 @@ async function seedPlaces(): Promise<void> {
  * LEARNING POINT: Script Entry Point Pattern
  *
  * This pattern allows the file to be both:
- * 1. Run directly: npx ts-node scripts/seedPlaces.ts
- * 2. Imported as a module: import { seedPlaces } from './scripts/seedPlaces'
+ * 1. Run directly: npx ts-node scripts/seedPlaceCollection.ts
+ * 2. Imported as a module: import { seedPlaces } from './scripts/seedPlaceCollection'
  *
  * require.main === module is true only when run directly.
  */

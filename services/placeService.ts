@@ -10,12 +10,12 @@ import {
 
 import { Place, AdminOverride } from '@/types';
 
-function doctoPlace(id: string, data: unknown): Place {
-    const doc = data as Record<string, unknown>;
+function mapPlaceDocument(id: string, data: unknown): Place {
+    const placeDocument = data as Record<string, unknown>;
 
     let adminOverride: AdminOverride | null = null;
-    if (doc.adminOverride && typeof doc.adminOverride === 'object') {
-        const raw = doc.adminOverride as Record<string, unknown>;
+    if (placeDocument.adminOverride && typeof placeDocument.adminOverride === 'object') {
+        const raw = placeDocument.adminOverride as Record<string, unknown>;
         adminOverride = {
             active: (raw.active as boolean) ?? false,
             busyPercent: (raw.busyPercent as number) ?? 0,
@@ -26,14 +26,14 @@ function doctoPlace(id: string, data: unknown): Place {
 
     return {
         id,
-        name: doc.name as string,
-        type: doc.type as Place['type'],
+        name: placeDocument.name as string,
+        type: placeDocument.type as Place['type'],
         location: {
-            latitude: (doc.location as Record<string, number>).latitude,
-            longitude: (doc.location as Record<string, number>).longitude,
+            latitude: (placeDocument.location as Record<string, number>).latitude,
+            longitude: (placeDocument.location as Record<string, number>).longitude,
         },
-        busyPercent: (doc.busyPercent as number) ?? 0,
-        lastUpdate: doc.lastUpdate ? (doc.lastUpdate as Timestamp).toDate() : null,
+        busyPercent: (placeDocument.busyPercent as number) ?? 0,
+        lastUpdate: placeDocument.lastUpdate ? (placeDocument.lastUpdate as Timestamp).toDate() : null,
         adminOverride,
     };
 }
@@ -42,7 +42,7 @@ export function subscribePlaces(onPlaces: (places: Place[]) => void, onError?: (
     const placeRef = collection(db, 'places');
 
     const unsubscribe = onSnapshot(placeRef, (snapshot) => {
-        const places: Place[] = snapshot.docs.map((doc) => doctoPlace(doc.id, doc.data()));
+        const places: Place[] = snapshot.docs.map((doc) => mapPlaceDocument(doc.id, doc.data()));
         onPlaces(places);
     }, (error) => {
         console.error('Error subscribing to places:', error);
@@ -58,7 +58,7 @@ export async function getPlaceById(placeId: string): Promise<Place | null> {
     if (!placeSnap.exists()) {
         return null;
     } else {
-        return doctoPlace(placeSnap.id, placeSnap.data());
+        return mapPlaceDocument(placeSnap.id, placeSnap.data());
     }
 }
 
@@ -71,7 +71,7 @@ export function subscribePlace(
 
     return onSnapshot(placeRef, (snapshot) => {
         if (snapshot.exists()) {
-            onPlace(doctoPlace(snapshot.id, snapshot.data()));
+            onPlace(mapPlaceDocument(snapshot.id, snapshot.data()));
         } else {
             onPlace(null);
         }

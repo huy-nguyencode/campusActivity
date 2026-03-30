@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { checkIsAdmin, setAdminOverride, removeAdminOverride } from '@/services/admin';
+import { checkIsAdmin, setAdminOverride, removeAdminOverride } from '@/services/adminService';
 
 interface UseAdminReturn {
     isAdmin: boolean;

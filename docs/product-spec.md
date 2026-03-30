@@ -234,7 +234,7 @@ function PlaceScreen() {
 **Why:** Isolates side effects from UI code.
 
 ```typescript
-// services/checkin.ts
+// services/checkInService.ts
 export async function submitCheckin(placeId: string, level: BusyLevel): Promise<CheckIn | null> {
   // Get authenticated user
   const uid = await getCurrentUserUID();
@@ -269,7 +269,7 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
 **Why:** UI updates automatically when data changes, without manual refresh.
 
 ```typescript
-// services/places.ts
+// services/placeService.ts
 export function subscribePlaces(
   onUpdate: (places: Place[]) => void,
   onError: (error: Error) => void
@@ -339,7 +339,7 @@ function PlaceScreen() {
 **Why:** Easy to test, reason about, and debug.
 
 ```typescript
-// utils/haversine.ts - Pure function
+// utils/distance.ts - Pure function
 export function haversineDistance(
   lat1: number, lon1: number,
   lat2: number, lon2: number
@@ -760,7 +760,7 @@ firebase deploy
 firebase emulators:start
 
 # Seed places to Firestore
-npx ts-node scripts/seedPlaces.ts
+npx ts-node scripts/seedPlaceCollection.ts
 ```
 
 ---

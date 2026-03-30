@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CheckIn, BusyLevel } from '@/types';
-import { submitCheckin, isOnCoolDown, getCooldown } from '@/services/checkin';
+import { submitCheckin, isOnCoolDown, getCooldown } from '@/services/checkInService';
 import { CONFIG } from '@/constants/config';
 
 export function useCheckIn(placeId: string | null) {

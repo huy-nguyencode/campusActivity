@@ -7,7 +7,7 @@
  *
  * Usage:
  *   GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json \
- *   npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/testCheckin.ts
+ *   npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/testCheckInFunction.ts
  *
  * Optional args:
  *   --place <placeId>   Place to check in to (default: "charles-library")

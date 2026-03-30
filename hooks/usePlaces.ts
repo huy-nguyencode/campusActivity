@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import { Place } from '@/types';
-import { subscribePlaces } from '@/services/places';
+import { subscribePlaces } from '@/services/placeService';
 
 interface PlacesSnapshot {
     places: Place[];

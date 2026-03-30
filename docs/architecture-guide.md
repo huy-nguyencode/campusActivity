@@ -81,16 +81,16 @@ Important folders and files:
 - `hooks/useLocation.ts`: location permission and watcher state
 - `hooks/usePlaces.ts`: shared Firestore places subscription
 - `hooks/useCheckIn.ts`: check-in and cooldown logic
-- `services/auth.ts`: Firebase auth calls
-- `services/location.ts`: Expo location calls
-- `services/places.ts`: Firestore place reads and subscriptions
-- `services/checkin.ts`: callable function submission and local cooldown
-- `services/admin.ts`: admin lookups and override writes
+- `services/authService.ts`: Firebase auth calls
+- `services/locationService.ts`: Expo location calls
+- `services/placeService.ts`: Firestore place reads and subscriptions
+- `services/checkInService.ts`: callable function submission and local cooldown
+- `services/adminService.ts`: admin lookups and override writes
 - `config/firebase.ts`: Firebase app setup
 - `constants/config.ts`: behavioral constants
 - `constants/theme.ts`: color, spacing, font, shadow, and helper tokens
 - `types/index.ts`: domain models
-- `utils/haversine.ts`: distance math
+- `utils/distance.ts`: distance math
 - `functions/src/index.ts`: Cloud Functions backend
 - `firestore.rules`: database security rules
 - `data/places.json`: seed list of campus places
@@ -326,7 +326,7 @@ Responsibilities:
 - highlight the active tab
 - handle tab presses
 
-### `components/ErrorBoundary.tsx`
+### `components/AppErrorBoundary.tsx`
 
 Global error boundary for the React tree.
 
@@ -418,7 +418,7 @@ Responsibilities:
 
 The service layer hides direct Firebase and device API details from the rest of the app.
 
-### `services/auth.ts`
+### `services/authService.ts`
 
 Provides:
 
@@ -426,7 +426,7 @@ Provides:
 - auth-state listener
 - access to the current Firebase user
 
-### `services/location.ts`
+### `services/locationService.ts`
 
 Provides:
 
@@ -436,7 +436,7 @@ Provides:
 
 This wraps `expo-location` so React screens do not need to deal with raw API details.
 
-### `services/places.ts`
+### `services/placeService.ts`
 
 Provides:
 
@@ -450,7 +450,7 @@ Why the mapping matters:
 - the UI wants typed values like `Date | null`
 - keeping this translation in one place reduces bugs
 
-### `services/checkin.ts`
+### `services/checkInService.ts`
 
 Provides:
 
@@ -462,7 +462,7 @@ Important design point:
 
 The client stores cooldown locally for good UX, but the server also enforces cooldown so users cannot bypass it by modifying the app.
 
-### `services/proximity.ts`
+### `services/proximityService.ts`
 
 Provides:
 
@@ -472,7 +472,7 @@ Provides:
 
 This is mostly pure business logic and is easy to reason about because it is not tightly coupled to React.
 
-### `services/admin.ts`
+### `services/adminService.ts`
 
 Provides:
 
@@ -648,7 +648,7 @@ Defines the app's domain model:
 
 Understanding these types makes the rest of the codebase much easier to follow.
 
-### `utils/haversine.ts`
+### `utils/distance.ts`
 
 Defines the geographic distance helper used for proximity checks.
 
@@ -672,7 +672,7 @@ This is the most useful system-level walkthrough.
 8. The app computes proximity and GPS accuracy.
 9. The app checks cooldown state for that place.
 10. If allowed, the user taps one of the check-in buttons.
-11. `services/checkin.ts` calls the callable backend function.
+11. `services/checkInService.ts` calls the callable backend function.
 12. `submitCheckin` validates and writes the event server-side.
 13. The scheduled aggregation function recomputes `busyPercent`.
 14. Firestore `onSnapshot` pushes the updated place data to the client.
@@ -746,9 +746,9 @@ This is a good example of adding operational controls without breaking the rest 
 Useful reference docs already present:
 
 - `README.md`
-- `SPEC.md`
-- `IMPLEMENTATION_PLAN.md`
-- `PRIVACY.md`
+- `docs/product-spec.md`
+- `docs/implementation-plan.md`
+- `docs/privacy-policy.md`
 
 These are helpful for context, but the code should still be treated as the final source of truth if a doc and the implementation differ.
 
@@ -764,11 +764,11 @@ Recommended reading order:
 6. `hooks/useAuth.ts`
 7. `hooks/useLocation.ts`
 8. `hooks/usePlaces.ts`
-9. `services/places.ts`
+9. `services/placeService.ts`
 10. `app/(tabs)/index.tsx`
 11. `app/(tabs)/places.tsx`
 12. `app/place/[id].tsx`
-13. `services/checkin.ts`
+13. `services/checkInService.ts`
 14. `functions/src/index.ts`
 15. `firestore.rules`
 

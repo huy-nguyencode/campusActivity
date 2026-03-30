@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const rootDir = process.cwd();
-const inputPath = path.join(rootDir, 'CAMPUS_SPOTS_ARCHITECTURE_GUIDE.md');
+const inputPath = path.join(rootDir, 'docs', 'architecture-guide.md');
 const outputPath = path.join(rootDir, 'Campus-Spots-Architecture-Guide.pdf');
 
 const rawMarkdown = fs.readFileSync(inputPath, 'utf8');

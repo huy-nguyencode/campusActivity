@@ -2,7 +2,7 @@ import { functions } from '@/config/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { CheckIn, BusyLevel } from '@/types';
 import { CONFIG } from '@/constants/config';
-import { getCurrentUserUID, signInAnon } from '@/services/auth';
+import { getCurrentUserUID, signInAnon } from '@/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface SubmitCheckinResponse {

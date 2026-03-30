@@ -24,7 +24,7 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 | `config/firebase.ts` | Firebase init with offline persistence | ✅ |
 | `types/index.ts` | TypeScript interfaces (Place, CheckIn, LocationState) | ✅ |
 | `constants/config.ts` | App constants (3m radius, 90min cooldown, etc.) | ✅ |
-| `utils/haversine.ts` | Distance calculation function | ✅ |
+| `utils/distance.ts` | Distance calculation function | ✅ |
 
 ### 1.4 Update app.json ✅
 - [x] Add location permission strings for iOS/Android
@@ -36,12 +36,12 @@ npx expo install firebase expo-location @react-native-async-storage/async-storag
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `services/auth.ts` | Anonymous sign-in, auth state listener | ✅ |
-| `services/location.ts` | Permission handling, location watching | ✅ |
-| `services/checkin.ts` | Submit check-ins, manage cooldowns | ✅ |
-| `services/places.ts` | Firestore real-time subscription for places | ✅ |
-| `services/proximity.ts` | Calculate distance to POIs, find nearby places | ✅ |
-| `services/admin.ts` | Admin check + override management | ✅ |
+| `services/authService.ts` | Anonymous sign-in, auth state listener | ✅ |
+| `services/locationService.ts` | Permission handling, location watching | ✅ |
+| `services/checkInService.ts` | Submit check-ins, manage cooldowns | ✅ |
+| `services/placeService.ts` | Firestore real-time subscription for places | ✅ |
+| `services/proximityService.ts` | Calculate distance to POIs, find nearby places | ✅ |
+| `services/adminService.ts` | Admin check + override management | ✅ |
 
 ---
 
@@ -127,7 +127,7 @@ Created `functions/` directory with Firebase Functions:
 
 ### Seed Data ✅
 - `data/places.json` with Temple University campus locations
-- `scripts/seedPlaces.ts` for database initialization
+- `scripts/seedPlaceCollection.ts` for database initialization
 
 ---
 
@@ -151,7 +151,7 @@ Created `functions/` directory with Firebase Functions:
 | `components/map/PlaceMarker.tsx` | Place-type icons instead of busyness emoji, white pin bg | ✅ |
 | `components/checkin/CooldownTimer.tsx` | Gentler pulse (1.03 scale, 1200ms cycle) | ✅ |
 | `components/checkin/CheckInButtons.tsx` | Updated comments for cherry aesthetic | ✅ |
-| `components/ErrorBoundary.tsx` | Fixed BORDER_RADIUS → RADIUS, SPACING key bugs | ✅ |
+| `components/AppErrorBoundary.tsx` | Fixed BORDER_RADIUS → RADIUS, SPACING key bugs | ✅ |
 | `types/index.ts` | Fixed PlaceType to match Firestore data (lowercase with spaces) | ✅ |
 
 ### Dependencies Changed ✅
@@ -193,15 +193,15 @@ Created `functions/` directory with Firebase Functions:
 
 ### Types & Utils
 - `types/index.ts` - TypeScript interfaces
-- `utils/haversine.ts` - Distance calculations
+- `utils/distance.ts` - Distance calculations
 
 ### Services
-- `services/auth.ts` - Authentication
-- `services/location.ts` - GPS tracking
-- `services/places.ts` - Firestore operations
-- `services/checkin.ts` - Check-in logic
-- `services/proximity.ts` - Distance detection
-- `services/admin.ts` - Admin override management
+- `services/authService.ts` - Authentication
+- `services/locationService.ts` - GPS tracking
+- `services/placeService.ts` - Firestore operations
+- `services/checkInService.ts` - Check-in logic
+- `services/proximityService.ts` - Distance detection
+- `services/adminService.ts` - Admin override management
 
 ### Hooks
 - `hooks/useAuth.ts` - Auth state management
@@ -219,7 +219,7 @@ Created `functions/` directory with Firebase Functions:
 - `components/places/PlaceCard.tsx`
 - `components/navigation/FloatingTabBar.tsx`
 - `components/admin/AdminOverridePanel.tsx`
-- `components/ErrorBoundary.tsx`
+- `components/AppErrorBoundary.tsx`
 
 ### Screens
 - `app/_layout.tsx` - Root layout
@@ -233,7 +233,7 @@ Created `functions/` directory with Firebase Functions:
 ### Backend
 - `functions/src/index.ts` - Cloud Function
 - `data/places.json` - Seed data
-- `scripts/seedPlaces.ts` - Seeder script
+- `scripts/seedPlaceCollection.ts` - Seeder script
 
 ---
 

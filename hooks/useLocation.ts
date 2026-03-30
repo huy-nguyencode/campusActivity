@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import * as Location from 'expo-location';
 import { LocationState, LocationPermissionStatus } from '@/types';
-import { checkLocationPermission, requestLocationPermission, watchLocation } from '@/services/location';
+import { checkLocationPermission, requestLocationPermission, watchLocation } from '@/services/locationService';
 
 interface LocationSnapshot {
     location: LocationState | null;

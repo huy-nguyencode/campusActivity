@@ -1,6 +1,6 @@
 import { db } from '@/config/firebase';
 import { doc, getDoc, updateDoc, deleteField, serverTimestamp } from 'firebase/firestore';
-import { getCurrentUserUID } from '@/services/auth';
+import { getCurrentUserUID } from '@/services/authService';
 
 /**
  * Checks whether the given UID belongs to an admin.

@@ -43,6 +43,7 @@ app/                  Expo Router screens
   (tabs)/places       List screen
   place/[id]          Place detail + check-in
 components/           Reusable UI components
+docs/                 Architecture, spec, implementation, and privacy docs
   admin/              Admin override panel
   checkin/            Check-in buttons, cooldown timer, stale indicator
   map/                Custom map marker
@@ -52,9 +53,9 @@ config/               Firebase initialization
 constants/            Theme tokens and app config
 functions/src/        Cloud Function (busy percent aggregation)
 hooks/                Custom React hooks
-services/             Firebase / device API calls
+services/             Purpose-built domain services
 types/                TypeScript interfaces
-utils/                Haversine distance formula
+utils/                Shared calculation helpers
 ```
 
 ## Getting Started
