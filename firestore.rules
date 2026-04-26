@@ -48,7 +48,8 @@ service cloud.firestore {
       allow read: if true;
       allow create, delete: if false;
       allow update: if isAdmin()
-                    && onlyAffects(['busyPercent', 'adminOverride']);
+                    && onlyAffects(['busyPercent', 'adminOverride'])
+                    && validAdminPlaceUpdate();
     }
 
     /**
@@ -146,6 +147,27 @@ service cloud.firestore {
      */
     function onlyAffects(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    function validPercent(value) {
+      return value is number && value >= 0 && value <= 100;
+    }
+
+    function validAdminPlaceUpdate() {
+      return (!request.resource.data.keys().hasAny(['busyPercent'])
+              || validPercent(request.resource.data.busyPercent))
+          && (!request.resource.data.keys().hasAny(['adminOverride'])
+              || validAdminOverride(request.resource.data.adminOverride));
+    }
+
+    function validAdminOverride(override) {
+      return override is map
+          && override.keys().hasOnly(['active', 'busyPercent', 'setBy', 'setAt'])
+          && override.keys().hasAll(['active', 'busyPercent', 'setBy', 'setAt'])
+          && override.active == true
+          && validPercent(override.busyPercent)
+          && override.setBy == request.auth.uid
+          && override.setAt is timestamp;
     }
 
     /**

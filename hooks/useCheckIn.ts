@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckIn, BusyLevel } from '@/types';
+import { CheckIn, BusyLevel, LocationState } from '@/types';
 import { submitCheckin, isOnCoolDown, getCooldown } from '@/services/checkInService';
 import { CONFIG } from '@/constants/config';
 
@@ -9,43 +9,43 @@ export function useCheckIn(placeId: string | null) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const refreshCooldown = useCallback(async () => {
         if (!placeId) {
             setIsOnCooldown(false);
             setCooldownEndTime(null);
             return;
         }
 
-        const checkCooldownStatus = async () => {
-            try {
-                const onCooldown = await isOnCoolDown(placeId);
-                setIsOnCooldown(onCooldown);
+        try {
+            const onCooldown = await isOnCoolDown(placeId);
+            setIsOnCooldown(onCooldown);
 
-                if (onCooldown) {
-                    const lastCheckInTime = await getCooldown(placeId);
-                    if (lastCheckInTime) {
-                        const endTime = new Date(lastCheckInTime.getTime() + CONFIG.CHECK_IN_COOLDOWN * 60000);
-                        setCooldownEndTime(endTime);
-                    }
-                } else {
-                    setCooldownEndTime(null);
+            if (onCooldown) {
+                const lastCheckInTime = await getCooldown(placeId);
+                if (lastCheckInTime) {
+                    const endTime = new Date(lastCheckInTime.getTime() + CONFIG.CHECK_IN_COOLDOWN * 60000);
+                    setCooldownEndTime(endTime);
                 }
-            } catch (err) {
-                console.error('Error checking cooldown:', err);
+            } else {
+                setCooldownEndTime(null);
             }
-        };
-
-        checkCooldownStatus();
+        } catch (err) {
+            console.error('Error checking cooldown:', err);
+        }
     }, [placeId]);
 
-    const checkIn = useCallback(async (level: BusyLevel): Promise<CheckIn | null> => {
+    useEffect(() => {
+        refreshCooldown();
+    }, [refreshCooldown]);
+
+    const checkIn = useCallback(async (level: BusyLevel, location: LocationState): Promise<CheckIn | null> => {
         if (!placeId) return null;
 
         setIsLoading(true);
         setError(null);
 
         try {
-            const result = await submitCheckin(placeId, level);
+            const result = await submitCheckin(placeId, level, location);
             if (result) {
                 setIsOnCooldown(true);
                 const endTime = new Date(Date.now() + CONFIG.CHECK_IN_COOLDOWN * 60000);
@@ -62,6 +62,7 @@ export function useCheckIn(placeId: string | null) {
 
     return {
         checkIn,
+        refreshCooldown,
         isOnCooldown,
         cooldownEndTime,
         isLoading,

@@ -48,7 +48,8 @@ const PLACE_TYPE_ICONS: Record<string, string> = {
 };
 
 export default function PlaceScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const { id } = useLocalSearchParams<{ id?: string | string[] }>();
+    const placeId = Array.isArray(id) ? id[0] : id;
     const [place, setPlace] = useState<Place | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [placeError, setPlaceError] = useState<string | null>(null);
@@ -61,7 +62,8 @@ export default function PlaceScreen() {
         cooldownEndTime,
         isLoading: checkInLoading,
         error: checkInError,
-    } = useCheckIn(id ?? null);
+        refreshCooldown,
+    } = useCheckIn(placeId ?? null);
     const { isAdmin, setOverride, clearOverride } = useAdmin(uid);
     const insets = useSafeAreaInsets();
 
@@ -96,7 +98,7 @@ export default function PlaceScreen() {
     );
 
     useEffect(() => {
-        if (!id) {
+        if (!placeId) {
             setPlaceError('No place ID provided');
             setIsLoading(false);
             return;
@@ -106,7 +108,7 @@ export default function PlaceScreen() {
         setPlaceError(null);
 
         const unsubscribe = subscribePlace(
-            id,
+            placeId,
             (fetchedPlace) => {
                 if (fetchedPlace) {
                     setPlace(fetchedPlace);
@@ -123,16 +125,20 @@ export default function PlaceScreen() {
         );
 
         return unsubscribe;
-    }, [id]);
+    }, [placeId]);
 
     const handleCheckIn = useCallback(async (level: BusyLevel) => {
-        const result = await checkIn(level);
+        if (!location) return;
+
+        const result = await checkIn(level, location);
         if (result) {
             router.back();
         }
-    }, [checkIn]);
+    }, [checkIn, location]);
 
-    const handleCooldownComplete = useCallback(() => {}, []);
+    const handleCooldownComplete = useCallback(() => {
+        refreshCooldown();
+    }, [refreshCooldown]);
 
     const backButtonAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: backButtonScale.value }],
@@ -264,7 +270,9 @@ export default function PlaceScreen() {
                         <Text style={styles.helperText}>Signing you in...</Text>
                     )}
                     {!authLoading && !uid && (
-                        <Text style={styles.helperText}>Sign-in failed. Please try again.</Text>
+                        <Text style={styles.helperText}>
+                            Sign-in failed. Please try again.
+                        </Text>
                     )}
                     {checkInError && (
                         <Text style={styles.helperText}>{checkInError}</Text>
@@ -280,7 +288,7 @@ export default function PlaceScreen() {
                     <Animated.View entering={FadeInUp.duration(500).delay(800)}>
                         <View style={styles.adminDivider} />
                         <AdminOverridePanel
-                            placeId={id!}
+                            placeId={place.id}
                             currentOverride={place.adminOverride}
                             onApply={setOverride}
                             onRemove={clearOverride}

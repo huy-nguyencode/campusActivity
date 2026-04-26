@@ -50,7 +50,7 @@ const BUSY_LEVELS: {
 ];
 
 interface CheckInButtonsProps {
-    onCheckIn: (level: BusyLevel) => void;
+    onCheckIn: (level: BusyLevel) => Promise<void> | void;
     disabled?: boolean;
     isLoading?: boolean;
 }
@@ -119,7 +119,7 @@ function BusyButton({
 export function CheckInButtons({ onCheckIn, disabled = false, isLoading = false }: CheckInButtonsProps) {
     const handlePress = async (level: BusyLevel) => {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        onCheckIn(level);
+        await onCheckIn(level);
     };
 
     return (

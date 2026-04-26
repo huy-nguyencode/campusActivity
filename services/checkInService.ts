@@ -1,9 +1,21 @@
 import { functions } from '@/config/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { CheckIn, BusyLevel } from '@/types';
+import { CheckIn, BusyLevel, LocationState } from '@/types';
 import { CONFIG } from '@/constants/config';
 import { getCurrentUserUID, signInAnon } from '@/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface CheckInLocationPayload {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+}
+
+interface SubmitCheckinRequest {
+    placeId: string;
+    level: BusyLevel;
+    location: CheckInLocationPayload;
+}
 
 interface SubmitCheckinResponse {
     id: string;
@@ -17,7 +29,38 @@ interface CooldownDetails {
     cooldownEndsAt?: string;
 }
 
-export async function submitCheckin(placeId: string, level: BusyLevel): Promise<CheckIn | null> {
+function toLocationPayload(location: LocationState): CheckInLocationPayload {
+    if (location.accuracy == null) {
+        throw new Error('Location accuracy is required before checking in.');
+    }
+
+    return {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy,
+    };
+}
+
+function getCheckInErrorMessage(error: Error & { code?: string }): string {
+    switch (error.code) {
+        case 'functions/invalid-argument':
+            return 'Your location or check-in details were invalid. Please try again.';
+        case 'functions/failed-precondition':
+            return error.message || 'You must be nearby with accurate GPS to check in.';
+        case 'functions/unauthenticated':
+            return 'Please sign in again before checking in.';
+        case 'functions/not-found':
+            return 'This place could not be found.';
+        default:
+            return 'Check-in failed. Please try again.';
+    }
+}
+
+export async function submitCheckin(
+    placeId: string,
+    level: BusyLevel,
+    location: LocationState
+): Promise<CheckIn | null> {
     let uid = await getCurrentUserUID();
     if (!uid) {
         try {
@@ -35,12 +78,16 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
     if (await isOnCoolDown(placeId)) return null;
 
     try {
-        const submitCheckinCall = httpsCallable<{ placeId: string; level: BusyLevel }, SubmitCheckinResponse>(
+        const submitCheckinCall = httpsCallable<SubmitCheckinRequest, SubmitCheckinResponse>(
             functions,
             'submitCheckin'
         );
 
-        const response = await submitCheckinCall({ placeId, level });
+        const response = await submitCheckinCall({
+            placeId,
+            level,
+            location: toLocationPayload(location),
+        });
         const timestampDate = new Date(response.data.timestamp);
 
         await setCooldown(placeId, timestampDate);
@@ -61,12 +108,14 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
                 const cooldownEndDate = new Date(cooldownEndsAt);
                 const lastCheckInDate = new Date(cooldownEndDate.getTime() - CONFIG.CHECK_IN_COOLDOWN * 60000);
                 await setCooldown(placeId, lastCheckInDate);
+                return null;
             }
-            return null;
+
+            throw new Error(getCheckInErrorMessage(functionError));
         }
 
         console.error('Error submitting check-in:', error);
-        throw error;
+        throw new Error(getCheckInErrorMessage(functionError));
     }
 }
 

@@ -9,12 +9,16 @@ const MAX_BATCH_OPERATIONS = 500;
 const CONFIG = {
     CHECKIN_WINDOW_MINUTES: 90,
     HALF_LIFE_MINUTES: 30,
+    CHECK_IN_RADIUS_METERS: 50,
+    MINIMUM_ACCURACY_TO_CHECK_IN_METERS: 30,
     LEVEL_TO_PERCENT: {
         1: 0,
         2: 50,
         3: 100,
     } as Record<number, number>,
 };
+
+const EARTH_RADIUS_METERS = 6_371_000;
 
 interface CheckInDoc {
     placeId: string;
@@ -31,9 +35,99 @@ interface PlaceAggregationInput {
 interface PlaceDocData {
     busyPercent?: number;
     lastUpdate?: admin.firestore.Timestamp;
+    location?: {
+        latitude?: unknown;
+        longitude?: unknown;
+    };
     adminOverride?: {
         active?: boolean;
     };
+}
+
+interface ClientLocationInput {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+}
+
+interface GeoPointInput {
+    latitude: number;
+    longitude: number;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isValidLatitude(value: unknown): value is number {
+    return isFiniteNumber(value) && value >= -90 && value <= 90;
+}
+
+function isValidLongitude(value: unknown): value is number {
+    return isFiniteNumber(value) && value >= -180 && value <= 180;
+}
+
+function parseClientLocation(value: unknown): ClientLocationInput {
+    if (!value || typeof value !== 'object') {
+        throw new HttpsError('invalid-argument', 'Current location is required to check in.');
+    }
+
+    const rawLocation = value as Record<string, unknown>;
+    const { latitude, longitude, accuracy } = rawLocation;
+
+    if (!isValidLatitude(latitude) || !isValidLongitude(longitude)) {
+        throw new HttpsError('invalid-argument', 'A valid current location is required.');
+    }
+
+    if (!isFiniteNumber(accuracy) || accuracy <= 0) {
+        throw new HttpsError('invalid-argument', 'A valid location accuracy is required.');
+    }
+
+    if (accuracy > CONFIG.MINIMUM_ACCURACY_TO_CHECK_IN_METERS) {
+        throw new HttpsError('failed-precondition', 'Location accuracy is too low to check in.');
+    }
+
+    return { latitude, longitude, accuracy };
+}
+
+function getPlaceLocation(placeData: PlaceDocData): GeoPointInput {
+    const location = placeData.location;
+
+    if (!location || !isValidLatitude(location.latitude) || !isValidLongitude(location.longitude)) {
+        throw new HttpsError('failed-precondition', 'Place location is not configured correctly.');
+    }
+
+    return {
+        latitude: location.latitude,
+        longitude: location.longitude,
+    };
+}
+
+function toRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
+}
+
+function calculateDistanceMeters(left: GeoPointInput, right: GeoPointInput): number {
+    const deltaLatitude = toRadians(right.latitude - left.latitude);
+    const deltaLongitude = toRadians(right.longitude - left.longitude);
+
+    const a =
+        Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
+        Math.cos(toRadians(left.latitude)) *
+        Math.cos(toRadians(right.latitude)) *
+        Math.sin(deltaLongitude / 2) * Math.sin(deltaLongitude / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return EARTH_RADIUS_METERS * c;
+}
+
+function validateCheckinLocation(clientLocation: ClientLocationInput, placeLocation: GeoPointInput): void {
+    const distanceMeters = calculateDistanceMeters(clientLocation, placeLocation);
+
+    if (distanceMeters > CONFIG.CHECK_IN_RADIUS_METERS) {
+        throw new HttpsError('failed-precondition', 'You must be near this place to check in.');
+    }
 }
 
 function calculateDecayWeight(ageMinutes: number): number {
@@ -145,9 +239,17 @@ export const submitCheckin = onCall({
         throw new HttpsError('unauthenticated', 'You must be signed in to check in.');
     }
 
-    const { placeId, level } = request.data as { placeId?: unknown; level?: unknown };
+    const { placeId, level, location } = request.data as {
+        placeId?: unknown;
+        level?: unknown;
+        location?: unknown;
+    };
 
-    if (typeof placeId !== 'string' || placeId.trim().length === 0) {
+    if (
+        typeof placeId !== 'string' ||
+        placeId.trim().length === 0 ||
+        placeId.includes('/')
+    ) {
         throw new HttpsError('invalid-argument', 'A valid place ID is required.');
     }
 
@@ -155,6 +257,7 @@ export const submitCheckin = onCall({
         throw new HttpsError('invalid-argument', 'Busy level must be 1, 2, or 3.');
     }
 
+    const clientLocation = parseClientLocation(location);
     const uid = request.auth.uid;
     const normalizedPlaceId = placeId.trim();
     const cooldownRef = db.collection('checkinCooldowns').doc(`${uid}_${normalizedPlaceId}`);
@@ -174,6 +277,9 @@ export const submitCheckin = onCall({
         if (!placeSnap.exists) {
             throw new HttpsError('not-found', 'Place not found.');
         }
+
+        const placeLocation = getPlaceLocation(placeSnap.data() as PlaceDocData);
+        validateCheckinLocation(clientLocation, placeLocation);
 
         const lastCheckInAt = cooldownSnap.get('lastCheckInAt') as admin.firestore.Timestamp | undefined;
         if (lastCheckInAt) {
