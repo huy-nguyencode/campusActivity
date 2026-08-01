@@ -83,6 +83,35 @@ function getSnapshot() {
     return authSnapshot;
 }
 
+async function retrySignIn(): Promise<void> {
+    if (signInPromise || authSnapshot.user) {
+        return;
+    }
+
+    authSnapshot = {
+        ...authSnapshot,
+        isLoading: true,
+        error: null,
+    };
+    emitChange();
+
+    signInPromise = signInAnon()
+        .then(() => undefined)
+        .catch((error) => {
+            authSnapshot = {
+                user: null,
+                error: (error as Error).message,
+                isLoading: false,
+            };
+            emitChange();
+        })
+        .finally(() => {
+            signInPromise = null;
+        });
+
+    await signInPromise;
+}
+
 export function useAuth() {
     const { user, isLoading, error } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
@@ -91,5 +120,6 @@ export function useAuth() {
         uid: user?.uid ?? null,
         isLoading,
         error,
+        retrySignIn,
     };
 }

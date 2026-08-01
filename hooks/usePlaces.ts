@@ -36,8 +36,10 @@ function startPlacesSubscription() {
             emitChange();
         },
         (error: Error) => {
+            // onSnapshot stops delivering after an error; clear so refresh/retry can restart.
+            placesUnsubscribe = null;
             placesSnapshot = {
-                places: [],
+                places: placesSnapshot.places,
                 error: error.message,
                 isLoading: false,
             };
@@ -53,6 +55,17 @@ function stopPlacesSubscription() {
 
     placesUnsubscribe();
     placesUnsubscribe = null;
+}
+
+function restartPlacesSubscription() {
+    stopPlacesSubscription();
+    placesSnapshot = {
+        ...placesSnapshot,
+        error: null,
+        isLoading: true,
+    };
+    emitChange();
+    startPlacesSubscription();
 }
 
 function subscribe(listener: () => void) {
@@ -74,10 +87,8 @@ function getSnapshot() {
 export function usePlaces() {
     const { places, error, isLoading } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-    // With real-time subscriptions, data is always fresh.
-    // This function exists for pull-to-refresh UX feedback.
     const refresh = useCallback(async () => {
-        return Promise.resolve();
+        restartPlacesSubscription();
     }, []);
 
     return {

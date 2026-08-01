@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import Animated, {
     useAnimatedStyle,
@@ -117,10 +118,22 @@ function BusyButton({
 }
 
 export function CheckInButtons({ onCheckIn, disabled = false, isLoading = false }: CheckInButtonsProps) {
+    const submittingRef = useRef(false);
+
     const handlePress = async (level: BusyLevel) => {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        await onCheckIn(level);
+        // Guard before any await so double-taps can't fire two check-ins.
+        if (disabled || isLoading || submittingRef.current) return;
+        submittingRef.current = true;
+
+        try {
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            await onCheckIn(level);
+        } finally {
+            submittingRef.current = false;
+        }
     };
+
+    const buttonsDisabled = disabled || isLoading;
 
     return (
         <View style={styles.outerContainer}>
@@ -135,7 +148,7 @@ export function CheckInButtons({ onCheckIn, disabled = false, isLoading = false 
                             label={label}
                             bgColor={bgColor}
                             textColor={textColor}
-                            disabled={disabled || isLoading}
+                            disabled={buttonsDisabled}
                             onPress={() => handlePress(level)}
                         />
                     ))}

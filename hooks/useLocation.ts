@@ -34,13 +34,15 @@ function stopLocationWatcher() {
 }
 
 function updatePermissionState(permission: LocationPermissionStatus) {
-    if (permission === 'denied') {
+    if (permission === 'denied' || permission === 'restricted') {
         stopLocationWatcher();
         locationSnapshot = {
             ...locationSnapshot,
             permission,
             location: null,
-            error: 'Location permission denied',
+            error: permission === 'restricted'
+                ? 'Location access is restricted on this device'
+                : 'Location permission denied',
             isLoading: false,
         };
         emitChange();

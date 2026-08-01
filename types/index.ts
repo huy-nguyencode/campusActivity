@@ -46,12 +46,6 @@ export interface ProximityResult {
   isNearby: boolean;
 }
 
-export type LocationPermissionStatus = 'granted' | 'denied' | 'undetermined';
+export type LocationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'restricted';
 
 export type BusyColor = 'green' | 'yellow' | 'red';
-
-export function getBusyColor(percent: number): BusyColor {
-  if (percent <= 30) return 'green';
-  if (percent <= 60) return 'yellow';
-  return 'red';
-}

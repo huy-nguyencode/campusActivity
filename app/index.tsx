@@ -16,5 +16,7 @@ export default function Index() {
   if (permission === 'undetermined') {
     return <Redirect href="/(auth)/welcome" />;
   }
+  // granted / denied / restricted all proceed to the app;
+  // check-in flows already gate on granted + accuracy.
   return <Redirect href="/(tabs)" />;
 }

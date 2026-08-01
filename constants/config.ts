@@ -12,8 +12,6 @@ export const CONFIG = {
     },
 } as const;
 
-export { BUSY_COLORS } from './theme';
-
 export const BUSY_LEVEL_ICONS = {
     GREEN: '😊',
     YELLOW: '😟',

@@ -1,3 +1,5 @@
+import { CONFIG } from '@/constants/config';
+
 // =============================================================================
 // COLOR PALETTE
 // =============================================================================
@@ -277,14 +279,23 @@ export const BUSY_COLORS = {
 // HELPER FUNCTIONS
 // =============================================================================
 
+export function getBusyColor(percent: number): 'green' | 'yellow' | 'red' {
+    if (percent <= CONFIG.BUSY_THRESHOLDS.GREEN) return 'green';
+    if (percent <= CONFIG.BUSY_THRESHOLDS.YELLOW) return 'yellow';
+    return 'red';
+}
+
 export function getBusyStatusColor(percent: number): string {
-    if (percent < 30) return COLORS.status.green;
-    if (percent < 60) return COLORS.status.yellow;
+    const busyColor = getBusyColor(percent);
+    if (busyColor === 'green') return COLORS.status.green;
+    if (busyColor === 'yellow') return COLORS.status.yellow;
     return COLORS.status.red;
 }
 
 export function getBusyStatus(percent: number): { color: string; label: string; lightBg: string; emoji: string } {
-    if (percent < 30) {
+    const busyColor = getBusyColor(percent);
+
+    if (busyColor === 'green') {
         return {
             color: COLORS.status.green,
             label: 'Not Busy',
@@ -292,7 +303,7 @@ export function getBusyStatus(percent: number): { color: string; label: string; 
             emoji: '😴',
         };
     }
-    if (percent < 60) {
+    if (busyColor === 'yellow') {
         return {
             color: COLORS.status.yellow,
             label: 'Moderate',

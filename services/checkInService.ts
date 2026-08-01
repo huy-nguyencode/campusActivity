@@ -29,6 +29,10 @@ interface CooldownDetails {
     cooldownEndsAt?: string;
 }
 
+export type SubmitCheckinResult =
+    | { status: 'success'; checkIn: CheckIn }
+    | { status: 'cooldown'; cooldownEndsAt: Date };
+
 function toLocationPayload(location: LocationState): CheckInLocationPayload {
     if (location.accuracy == null) {
         throw new Error('Location accuracy is required before checking in.');
@@ -39,6 +43,12 @@ function toLocationPayload(location: LocationState): CheckInLocationPayload {
         longitude: location.longitude,
         accuracy: location.accuracy,
     };
+}
+
+function parseDate(value: string | null | undefined): Date | null {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function getCheckInErrorMessage(error: Error & { code?: string }): string {
@@ -56,11 +66,20 @@ function getCheckInErrorMessage(error: Error & { code?: string }): string {
     }
 }
 
+function extractCooldownEndsAt(error: Error & { details?: unknown; customData?: unknown }): string | undefined {
+    const details = error.details ?? error.customData;
+    if (!details || typeof details !== 'object') {
+        return undefined;
+    }
+
+    return (details as CooldownDetails).cooldownEndsAt;
+}
+
 export async function submitCheckin(
     placeId: string,
     level: BusyLevel,
     location: LocationState
-): Promise<CheckIn | null> {
+): Promise<SubmitCheckinResult> {
     let uid = await getCurrentUserUID();
     if (!uid) {
         try {
@@ -75,7 +94,10 @@ export async function submitCheckin(
         throw new Error('Not authenticated. Please try again.');
     }
 
-    if (await isOnCoolDown(placeId)) return null;
+    const existingCooldownEnd = await getCooldownEndTime(placeId);
+    if (existingCooldownEnd) {
+        return { status: 'cooldown', cooldownEndsAt: existingCooldownEnd };
+    }
 
     try {
         const submitCheckinCall = httpsCallable<SubmitCheckinRequest, SubmitCheckinResponse>(
@@ -93,22 +115,29 @@ export async function submitCheckin(
         await setCooldown(placeId, timestampDate);
 
         return {
-            id: response.data.id,
-            placeId: response.data.placeId,
-            level: response.data.level,
-            timestamp: timestampDate,
-            uid: response.data.uid,
+            status: 'success',
+            checkIn: {
+                id: response.data.id,
+                placeId: response.data.placeId,
+                level: response.data.level,
+                timestamp: timestampDate,
+                uid: response.data.uid,
+            },
         };
     } catch (error) {
-        const functionError = error as Error & { code?: string; details?: CooldownDetails };
+        const functionError = error as Error & { code?: string; details?: unknown; customData?: unknown };
 
         if (functionError.code === 'functions/failed-precondition') {
-            const cooldownEndsAt = functionError.details?.cooldownEndsAt;
+            const cooldownEndsAt = extractCooldownEndsAt(functionError);
             if (cooldownEndsAt) {
-                const cooldownEndDate = new Date(cooldownEndsAt);
-                const lastCheckInDate = new Date(cooldownEndDate.getTime() - CONFIG.CHECK_IN_COOLDOWN * 60000);
-                await setCooldown(placeId, lastCheckInDate);
-                return null;
+                const cooldownEndDate = parseDate(cooldownEndsAt);
+                if (cooldownEndDate) {
+                    const lastCheckInDate = new Date(
+                        cooldownEndDate.getTime() - CONFIG.CHECK_IN_COOLDOWN * 60000
+                    );
+                    await setCooldown(placeId, lastCheckInDate);
+                    return { status: 'cooldown', cooldownEndsAt: cooldownEndDate };
+                }
             }
 
             throw new Error(getCheckInErrorMessage(functionError));
@@ -124,22 +153,33 @@ function getCooldownStorageKey(placeId: string): string {
 }
 
 export async function isOnCoolDown(placeId: string): Promise<boolean> {
-    try {
-        const storageKey = getCooldownStorageKey(placeId);
-        const lastCheckin = await AsyncStorage.getItem(storageKey);
-        if (!lastCheckin) return false;
+    const endTime = await getCooldownEndTime(placeId);
+    return endTime !== null;
+}
 
-        const lastCheckinDate = new Date(lastCheckin);
-        const coolDownTime = lastCheckinDate.getTime() + CONFIG.CHECK_IN_COOLDOWN * 60000;
-        return coolDownTime > Date.now();
+export async function getCooldownEndTime(placeId: string): Promise<Date | null> {
+    try {
+        const lastCheckIn = await getCooldown(placeId);
+        if (!lastCheckIn) return null;
+
+        const coolDownTime = lastCheckIn.getTime() + CONFIG.CHECK_IN_COOLDOWN * 60000;
+        if (coolDownTime <= Date.now()) {
+            return null;
+        }
+
+        return new Date(coolDownTime);
     } catch (error) {
         console.error('Error checking cooldown:', error);
-        return false;
+        return null;
     }
 }
 
 async function setCooldown(placeId: string, lastCheckInAt: Date = new Date()): Promise<void> {
     try {
+        if (Number.isNaN(lastCheckInAt.getTime())) {
+            return;
+        }
+
         const storageKey = getCooldownStorageKey(placeId);
         await AsyncStorage.setItem(storageKey, lastCheckInAt.toISOString());
     } catch (error) {
@@ -151,8 +191,13 @@ export async function getCooldown(placeId: string): Promise<Date | null> {
     try {
         const storageKey = getCooldownStorageKey(placeId);
         const cooldown = await AsyncStorage.getItem(storageKey);
-        if (!cooldown) return null;
-        return new Date(cooldown);
+        const parsed = parseDate(cooldown);
+
+        if (cooldown && !parsed) {
+            await AsyncStorage.removeItem(storageKey);
+        }
+
+        return parsed;
     } catch (error) {
         console.error('Error getting cooldown:', error);
         return null;

@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: February 2026**
+**Last updated: July 2026**
 
 Campus Spots ("the app") is a crowd-tracking app for Temple University students. This privacy policy explains what data is collected, how it is used, and your rights.
 
@@ -10,8 +10,9 @@ Campus Spots ("the app") is a crowd-tracking app for Temple University students.
 
 ### Location Data
 - The app requests access to your device's location **while the app is in use**.
-- Your location is used only to detect nearby campus places and enable check-ins.
-- Your precise location is **never stored on our servers**. It is processed entirely on your device.
+- Your location is used on-device to detect nearby campus places.
+- When you submit a check-in, your current coordinates and GPS accuracy are sent to our servers **only to verify you are near the place**. They are validated in memory and **not stored** in our database.
+- Your precise location history is never retained.
 
 ### Anonymous Usage Data
 - When you use the app, you are automatically signed in with an **anonymous account** via Firebase Authentication.
@@ -24,7 +25,8 @@ Campus Spots ("the app") is a crowd-tracking app for Temple University students.
   - The place you checked into
   - Your busy level rating (Not Busy / Moderate / Very Busy)
   - The timestamp of the check-in
-- Check-in data is used solely to calculate crowd levels and is automatically aged out after 90 minutes.
+- Check-in data is used solely to calculate crowd levels.
+- Check-ins older than 90 minutes are automatically deleted by a scheduled cleanup job.
 
 ---
 
@@ -48,7 +50,9 @@ The app uses the following third-party services, each with their own privacy pra
 
 ## Data Retention
 
-Check-in records are retained in our database for up to 90 minutes after submission, after which they are no longer used in crowd calculations. No personal data is retained long-term.
+- Check-in records are retained for up to 90 minutes, then deleted.
+- Cooldown records expire after 90 minutes and are cleaned up periodically.
+- Anonymous auth IDs persist on your device until you clear app data; they are not linked to personal identity.
 
 ---
 

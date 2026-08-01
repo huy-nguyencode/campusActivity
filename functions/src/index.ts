@@ -229,6 +229,32 @@ async function commitInChunks(
     }
 }
 
+async function isUidAdmin(uid: string): Promise<boolean> {
+    const adminsSnap = await db.collection('config').doc('admins').get();
+    if (!adminsSnap.exists) {
+        return false;
+    }
+
+    const uids = adminsSnap.get('uids');
+    return Array.isArray(uids) && uids.includes(uid);
+}
+
+/**
+ * Returns whether the caller is an admin without exposing the admin UID list.
+ */
+export const checkAdminStatus = onCall({
+    region: 'us-central1',
+    memory: '256MiB',
+    timeoutSeconds: 10,
+    maxInstances: 5,
+}, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'You must be signed in.');
+    }
+
+    return { isAdmin: await isUidAdmin(request.auth.uid) };
+});
+
 export const submitCheckin = onCall({
     region: 'us-central1',
     memory: '256MiB',
@@ -407,5 +433,76 @@ export const aggregateBusyPercent = onSchedule(
             console.error('Error during aggregation:', error);
             throw error;
         }
+    }
+);
+
+/**
+ * Deletes check-ins older than the aggregation window so retention matches
+ * the privacy policy (crowd data is only meaningful for ~90 minutes).
+ */
+export const cleanupOldCheckins = onSchedule(
+    {
+        schedule: 'every 60 minutes',
+        timeZone: 'America/New_York',
+        retryCount: 3,
+        region: 'us-central1',
+        memory: '256MiB',
+        timeoutSeconds: 120,
+        maxInstances: 1,
+    },
+    async () => {
+        const cutoff = new Date(Date.now() - CONFIG.CHECKIN_WINDOW_MINUTES * 60 * 1000);
+        const cutoffTimestamp = admin.firestore.Timestamp.fromDate(cutoff);
+
+        console.log(`Cleaning check-ins older than ${cutoff.toISOString()}...`);
+
+        let deleted = 0;
+
+        // Paginate deletes to stay under batch limits.
+        while (true) {
+            const staleSnap = await db
+                .collection('checkins')
+                .where('timestamp', '<', cutoffTimestamp)
+                .limit(MAX_BATCH_OPERATIONS)
+                .get();
+
+            if (staleSnap.empty) {
+                break;
+            }
+
+            const batch = db.batch();
+            staleSnap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
+            await batch.commit();
+            deleted += staleSnap.size;
+
+            if (staleSnap.size < MAX_BATCH_OPERATIONS) {
+                break;
+            }
+        }
+
+        // Also prune expired cooldown docs to limit collection growth.
+        let cooldownsDeleted = 0;
+        while (true) {
+            const expiredCooldowns = await db
+                .collection('checkinCooldowns')
+                .where('cooldownEndsAt', '<', admin.firestore.Timestamp.now())
+                .limit(MAX_BATCH_OPERATIONS)
+                .get();
+
+            if (expiredCooldowns.empty) {
+                break;
+            }
+
+            const batch = db.batch();
+            expiredCooldowns.docs.forEach((docSnap) => batch.delete(docSnap.ref));
+            await batch.commit();
+            cooldownsDeleted += expiredCooldowns.size;
+
+            if (expiredCooldowns.size < MAX_BATCH_OPERATIONS) {
+                break;
+            }
+        }
+
+        console.log(`Cleanup complete. checkinsDeleted=${deleted} cooldownsDeleted=${cooldownsDeleted}`);
     }
 );
