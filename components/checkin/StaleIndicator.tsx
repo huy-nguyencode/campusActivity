@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { CONFIG } from '@/constants/config';
 import {
@@ -13,6 +14,18 @@ interface StaleIndicatorProps {
 }
 
 export function StaleIndicator({ lastUpdate }: StaleIndicatorProps) {
+    const lastUpdateMs = lastUpdate?.getTime() ?? null;
+    const [clock, setClock] = useState(() => ({
+        lastUpdateMs,
+        now: Date.now(),
+    }));
+
+    if (lastUpdateMs !== clock.lastUpdateMs) {
+        // "Minutes ago" is relative to the moment this update is shown.
+        // eslint-disable-next-line react-hooks/purity
+        setClock({ lastUpdateMs, now: Date.now() });
+    }
+
     if (!lastUpdate) {
         return (
             <View style={styles.noDataContainer}>
@@ -24,7 +37,7 @@ export function StaleIndicator({ lastUpdate }: StaleIndicatorProps) {
         );
     }
 
-    const timeSinceUpdate = Date.now() - lastUpdate.getTime();
+    const timeSinceUpdate = clock.now - lastUpdate.getTime();
     const thresholdMs = CONFIG.STALE_CROWD_THRESHOLD * 60 * 1000;
 
     if (timeSinceUpdate < thresholdMs) {

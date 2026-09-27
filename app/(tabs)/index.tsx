@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
     map: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
     },
     centered: {
         flex: 1,

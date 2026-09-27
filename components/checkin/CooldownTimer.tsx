@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
     useAnimatedStyle,
@@ -31,11 +31,16 @@ const RADIUS_VALUE = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS_VALUE;
 
 export function CooldownTimer({ endTime, onComplete }: CooldownTimerProps) {
-    const calculateRemaining = useCallback(() => {
-        return Math.max(0, endTime.getTime() - Date.now());
-    }, [endTime]);
+    const endMs = endTime.getTime();
+    const [trackedEndMs, setTrackedEndMs] = useState(endMs);
+    const [remaining, setRemaining] = useState(() => Math.max(0, endMs - Date.now()));
 
-    const [remaining, setRemaining] = useState(calculateRemaining);
+    if (endMs !== trackedEndMs) {
+        setTrackedEndMs(endMs);
+        // The countdown is measured from the current time when the end time changes.
+        // eslint-disable-next-line react-hooks/purity
+        setRemaining(Math.max(0, endMs - Date.now()));
+    }
 
     const totalCooldown = CONFIG.CHECK_IN_COOLDOWN * 60 * 1000;
     const progress = 1 - remaining / totalCooldown;
@@ -58,26 +63,22 @@ export function CooldownTimer({ endTime, onComplete }: CooldownTimerProps) {
     }));
 
     useEffect(() => {
-        const initialRemaining = calculateRemaining();
-        setRemaining(initialRemaining);
-
-        if (initialRemaining <= 0) {
+        if (endMs <= Date.now()) {
             onComplete?.();
             return;
         }
 
         const interval = setInterval(() => {
-            const newRemaining = calculateRemaining();
-            setRemaining(newRemaining);
+            const next = Math.max(0, endMs - Date.now());
+            setRemaining(next);
 
-            if (newRemaining <= 0) {
-                clearInterval(interval);
+            if (next <= 0) {
                 onComplete?.();
             }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [endTime, calculateRemaining, onComplete]);
+    }, [endMs, onComplete]);
 
     const formatTime = (ms: number): string => {
         const totalSeconds = Math.floor(ms / 1000);

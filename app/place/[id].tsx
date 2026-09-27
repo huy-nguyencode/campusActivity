@@ -51,8 +51,18 @@ export default function PlaceScreen() {
     const { id } = useLocalSearchParams<{ id?: string | string[] }>();
     const placeId = Array.isArray(id) ? id[0] : id;
     const [place, setPlace] = useState<Place | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [placeError, setPlaceError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(placeId != null);
+    const [placeError, setPlaceError] = useState<string | null>(
+        placeId ? null : 'No place ID provided'
+    );
+    const [subscribedPlaceId, setSubscribedPlaceId] = useState(placeId);
+
+    if (placeId !== subscribedPlaceId) {
+        setSubscribedPlaceId(placeId);
+        setPlace(null);
+        setIsLoading(placeId != null);
+        setPlaceError(placeId ? null : 'No place ID provided');
+    }
 
     const {
         location,
@@ -107,14 +117,7 @@ export default function PlaceScreen() {
     );
 
     useEffect(() => {
-        if (!placeId) {
-            setPlaceError('No place ID provided');
-            setIsLoading(false);
-            return;
-        }
-
-        setIsLoading(true);
-        setPlaceError(null);
+        if (!placeId) return;
 
         const unsubscribe = subscribePlace(
             placeId,

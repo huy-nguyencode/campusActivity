@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAuth } from 'firebase/auth';
-// @ts-ignore - Firebase RN-specific export not in main types
-import { getReactNativePersistence } from '@firebase/auth/dist/rn/index.js';
+// Firebase 12's generic TypeScript declarations omit this React Native export,
+// but Metro resolves `firebase/auth` to Firebase's public RN entry point.
+// @ts-expect-error getReactNativePersistence exists in the React Native bundle.
+import { getReactNativePersistence, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import AsyncStorage from '@react-native-async-storage/async-storage';

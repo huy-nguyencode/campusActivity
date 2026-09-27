@@ -9,20 +9,22 @@
  * 3. Production - load initial required data
  *
  * Usage:
- *   npx ts-node scripts/seedPlaceCollection.ts
+ *   npm run seed:places
  *
  * Or with emulator:
- *   FIRESTORE_EMULATOR_HOST=localhost:8080 npx ts-node scripts/seedPlaceCollection.ts
+ *   FIRESTORE_EMULATOR_HOST=localhost:8080 npm run seed:places
  *
  * LEARNING POINT: TypeScript Execution
  *
- * This script uses ts-node to run TypeScript directly without compiling.
+ * This script uses tsx to run TypeScript directly without compiling.
  * For production scripts, you might want to compile first for performance.
  */
 
-import * as admin from 'firebase-admin';
-import * as fs from 'fs';
-import * as path from 'path';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { GeoPoint, getFirestore } from 'firebase-admin/firestore';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 /**
  * LEARNING POINT: Service Account Authentication
@@ -37,16 +39,14 @@ import * as path from 'path';
  * Project Settings > Service Accounts > Generate new private key
  */
 
-// Initialize Firebase Admin
-// When using emulator, it auto-configures from FIRESTORE_EMULATOR_HOST
-if (!admin.apps.length) {
-    admin.initializeApp({
-        // Uses default credentials from GOOGLE_APPLICATION_CREDENTIALS
-        // or from the emulator if FIRESTORE_EMULATOR_HOST is set
-    });
+// Firebase Admin automatically uses GOOGLE_APPLICATION_CREDENTIALS locally
+// and FIRESTORE_EMULATOR_HOST when the emulator is selected.
+if (getApps().length === 0) {
+    initializeApp();
 }
 
-const db = admin.firestore();
+const db = getFirestore();
+const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 
 interface PlaceData {
     id: string;
@@ -78,14 +78,14 @@ async function seedPlaces(): Promise<void> {
     console.log('Starting places seed...\n');
 
     // Read the places data file
-    const dataPath = path.join(__dirname, '..', 'data', 'places.json');
+    const dataPath = join(scriptDirectory, '..', 'data', 'places.json');
 
-    if (!fs.existsSync(dataPath)) {
+    if (!existsSync(dataPath)) {
         console.error(`Error: places.json not found at ${dataPath}`);
         process.exit(1);
     }
 
-    const fileContent = fs.readFileSync(dataPath, 'utf-8');
+    const fileContent = readFileSync(dataPath, 'utf-8');
     const data: PlacesFile = JSON.parse(fileContent);
 
     console.log(`Found ${data.places.length} places to seed\n`);
@@ -107,7 +107,7 @@ async function seedPlaces(): Promise<void> {
         batch.set(docRef, {
             name: place.name,
             type: place.type,
-            location: new admin.firestore.GeoPoint(
+            location: new GeoPoint(
                 place.location.latitude,
                 place.location.longitude
             ),
@@ -128,12 +128,16 @@ async function seedPlaces(): Promise<void> {
  * LEARNING POINT: Script Entry Point Pattern
  *
  * This pattern allows the file to be both:
- * 1. Run directly: npx ts-node scripts/seedPlaceCollection.ts
+ * 1. Run directly: npm run seed:places
  * 2. Imported as a module: import { seedPlaces } from './scripts/seedPlaceCollection'
  *
- * require.main === module is true only when run directly.
+ * In ESM, compare this module URL with the entry file URL instead of using
+ * CommonJS's require.main.
  */
-if (require.main === module) {
+const isDirectExecution = Boolean(process.argv[1])
+    && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+
+if (isDirectExecution) {
     seedPlaces()
         .then(() => {
             console.log('\nSeed complete!');

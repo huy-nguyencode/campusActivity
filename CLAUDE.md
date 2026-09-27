@@ -8,13 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm start          # Start Expo development server
 npm run ios        # Run on iOS simulator
 npm run android    # Run on Android emulator
-npm run web        # Run in web browser
 npm run lint       # Run ESLint
 ```
 
 ## Architecture
 
-**Stack**: React Native + Expo (SDK 54) with TypeScript, using Expo Router for file-based navigation.
+**Stack**: React Native + Expo (SDK 57) with TypeScript, using Expo Router for file-based navigation.
 
 ### Routing Structure
 
@@ -43,6 +42,6 @@ npm run lint       # Run ESLint
 
 ### Configuration
 
-- New Architecture enabled (`newArchEnabled: true`)
+- New Architecture is required (the `newArchEnabled` option was removed in SDK 55)
 - Experimental features: `typedRoutes`, `reactCompiler`
-- Supports iOS (with tablet), Android (edge-to-edge), and Web
+- Supports iOS and Android (edge-to-edge). Web is disabled.
