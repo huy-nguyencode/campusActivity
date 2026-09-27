@@ -17,7 +17,7 @@ A real-time crowd-tracking iOS app for Temple University's campus. Students can 
 
 | Layer | Technology |
 |---|---|
-| Framework | React Native + Expo (SDK 54) |
+| Framework | React Native + Expo (SDK 57) |
 | Navigation | Expo Router (file-based) |
 | Language | TypeScript |
 | Database | Firebase Firestore (real-time) |

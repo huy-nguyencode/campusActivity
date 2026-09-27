@@ -9,33 +9,34 @@ interface UseAdminReturn {
 }
 
 export function useAdmin(uid: string | null): UseAdminReturn {
+    const [checkedUid, setCheckedUid] = useState(uid);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(uid !== null);
+
+    // Reset when the signed-in user changes. Doing this during render keeps the
+    // effect below free of a synchronous setState, which the React Compiler rejects.
+    if (uid !== checkedUid) {
+        setCheckedUid(uid);
+        setIsAdmin(false);
+        setIsLoading(uid !== null);
+    }
 
     useEffect(() => {
+        if (!uid) return;
+
         let cancelled = false;
 
-        if (!uid) {
-            setIsAdmin(false);
-            setIsLoading(false);
-            return;
-        }
-
-        setIsLoading(true);
-
-        async function check() {
-            try {
-                const result = await checkIsAdmin(uid!);
+        checkIsAdmin(uid)
+            .then((result) => {
                 if (!cancelled) setIsAdmin(result);
-            } catch (err) {
+            })
+            .catch((err) => {
                 console.error('[useAdmin] Failed to check admin status:', err);
                 if (!cancelled) setIsAdmin(false);
-            } finally {
+            })
+            .finally(() => {
                 if (!cancelled) setIsLoading(false);
-            }
-        }
-
-        check();
+            });
 
         return () => { cancelled = true; };
     }, [uid]);

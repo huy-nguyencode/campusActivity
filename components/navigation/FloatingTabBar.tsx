@@ -2,9 +2,10 @@
  * Custom floating pill tab bar — reworked tab bar that sits as a rounded pill
  * above the bottom safe area with horizontal margin for an edge-to-edge content feel.
  */
-import { CommonActions } from '@react-navigation/native';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { ComponentProps } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { Tabs } from 'expo-router';
+import { CommonActions } from 'expo-router/react-navigation';
 import {
     COLORS,
     FONTS,
@@ -15,6 +16,8 @@ import {
     SEMANTIC_COLORS,
 } from '@/constants/theme';
 
+type FloatingTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
+
 const TAB_ICON_SIZE = 24;
 const PILL_HORIZONTAL_MARGIN = 24;
 const PILL_VERTICAL_MARGIN = 12;
@@ -24,7 +27,7 @@ export function FloatingTabBar({
     descriptors,
     navigation,
     insets,
-}: BottomTabBarProps) {
+}: FloatingTabBarProps) {
     const routes = state.routes;
 
     return (

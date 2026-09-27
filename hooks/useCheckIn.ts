@@ -10,6 +10,16 @@ export function useCheckIn(placeId: string | null) {
     const [error, setError] = useState<string | null>(null);
     const inFlightRef = useRef(false);
 
+    const [trackedPlaceId, setTrackedPlaceId] = useState(placeId);
+
+    if (placeId !== trackedPlaceId) {
+        setTrackedPlaceId(placeId);
+        if (!placeId) {
+            setIsOnCooldown(false);
+            setCooldownEndTime(null);
+        }
+    }
+
     const refreshCooldown = useCallback(async () => {
         if (!placeId) {
             setIsOnCooldown(false);
@@ -27,8 +37,22 @@ export function useCheckIn(placeId: string | null) {
     }, [placeId]);
 
     useEffect(() => {
-        refreshCooldown();
-    }, [refreshCooldown]);
+        if (!placeId) return;
+
+        let cancelled = false;
+
+        getCooldownEndTime(placeId)
+            .then((endTime) => {
+                if (cancelled) return;
+                setIsOnCooldown(endTime !== null);
+                setCooldownEndTime(endTime);
+            })
+            .catch((err) => {
+                console.error('Error checking cooldown:', err);
+            });
+
+        return () => { cancelled = true; };
+    }, [placeId]);
 
     const checkIn = useCallback(async (level: BusyLevel, location: LocationState): Promise<CheckIn | null> => {
         if (!placeId || inFlightRef.current) return null;
