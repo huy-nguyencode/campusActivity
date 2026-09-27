@@ -34,7 +34,7 @@ export default function PlacesScreen() {
         }
     }, [refresh]);
 
-    if (isLoading && !refreshing) {
+    if (isLoading && places.length === 0) {
         return (
             <View style={styles.centered}>
                 <Text style={styles.loadingEmoji}>📍</Text>

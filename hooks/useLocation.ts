@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { AppState, type NativeEventSubscription } from 'react-native';
 import * as Location from 'expo-location';
 import { LocationState, LocationPermissionStatus } from '@/types';
 import { checkLocationPermission, requestLocationPermission, watchLocation } from '@/services/locationService';
@@ -21,6 +22,7 @@ const listeners = new Set<() => void>();
 let locationSubscription: Location.LocationSubscription | null = null;
 let permissionCheckPromise: Promise<void> | null = null;
 let locationWatchPromise: Promise<void> | null = null;
+let appStateSubscription: NativeEventSubscription | null = null;
 
 function emitChange() {
     listeners.forEach((listener) => listener());
@@ -139,6 +141,24 @@ async function ensurePermissionChecked() {
     return permissionCheckPromise;
 }
 
+// Unlike ensurePermissionChecked, this doesn't flip isLoading, so returning
+// to the app doesn't flash loading screens when nothing changed.
+async function recheckPermissionOnForeground() {
+    try {
+        const permission = await checkLocationPermission();
+        if (permission === locationSnapshot.permission) {
+            return;
+        }
+
+        updatePermissionState(permission);
+        if (permission === 'granted') {
+            await ensureLocationWatcher();
+        }
+    } catch (error) {
+        console.error('[useLocation] Failed to re-check permission:', error);
+    }
+}
+
 function subscribe(listener: () => void) {
     listeners.add(listener);
     void ensurePermissionChecked();
@@ -147,10 +167,20 @@ function subscribe(listener: () => void) {
         void ensureLocationWatcher();
     }
 
+    if (!appStateSubscription) {
+        appStateSubscription = AppState.addEventListener('change', (state) => {
+            if (state === 'active') {
+                void recheckPermissionOnForeground();
+            }
+        });
+    }
+
     return () => {
         listeners.delete(listener);
         if (listeners.size === 0) {
             stopLocationWatcher();
+            appStateSubscription?.remove();
+            appStateSubscription = null;
         }
     };
 }

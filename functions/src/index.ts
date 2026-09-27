@@ -265,7 +265,7 @@ export const submitCheckin = onCall({
         throw new HttpsError('unauthenticated', 'You must be signed in to check in.');
     }
 
-    const { placeId, level, location } = request.data as {
+    const { placeId, level, location } = (request.data ?? {}) as {
         placeId?: unknown;
         level?: unknown;
         location?: unknown;

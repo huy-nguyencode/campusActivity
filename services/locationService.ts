@@ -2,10 +2,9 @@ import * as Location from 'expo-location';
 import { LocationState, LocationPermissionStatus } from '@/types';
 
 function normalizePermissionStatus(status: Location.PermissionStatus): LocationPermissionStatus {
-    // iOS "restricted" (parental controls / MDM) is effectively denied for our purposes.
+    // expo-location already reports iOS "restricted" (parental controls / MDM) as DENIED.
     if (status === Location.PermissionStatus.GRANTED) return 'granted';
     if (status === Location.PermissionStatus.DENIED) return 'denied';
-    if (status === 'restricted') return 'restricted';
     return 'undetermined';
 }
 

@@ -6,7 +6,9 @@ import { COLORS } from '@/constants/theme';
 export default function Index() {
   const { permission, isLoading } = useLocation();
 
-  if (isLoading) {
+  // isLoading stays true after permission resolves until the first GPS fix,
+  // so only wait while the permission itself is still unknown.
+  if (isLoading && permission === 'undetermined') {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={COLORS.primary[500]} />

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Pressable, ScrollView, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
@@ -54,8 +54,13 @@ export default function PlaceScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [placeError, setPlaceError] = useState<string | null>(null);
 
-    const { location } = useLocation();
-    const { uid, isLoading: authLoading } = useAuth();
+    const {
+        location,
+        permission,
+        isLoading: locationLoading,
+        requestPermission,
+    } = useLocation();
+    const { uid, isLoading: authLoading, error: authError, retrySignIn } = useAuth();
     const {
         checkIn,
         isOnCooldown,
@@ -86,6 +91,10 @@ export default function PlaceScreen() {
 
     const canCheckIn = isNearby && hasGoodAccuracy && !isOnCooldown && !!uid && !authLoading;
 
+    // iOS only shows the system prompt once; after a denial the user must go to Settings.
+    const isLocationDenied = permission === 'denied' || permission === 'restricted';
+    const canPromptForLocation = permission === 'undetermined' && !locationLoading;
+
     const floatingBackButton = (
         <Pressable
             style={[styles.floatingBackButton, { top: insets.top + SPACING[2] }]}
@@ -112,6 +121,7 @@ export default function PlaceScreen() {
             (fetchedPlace) => {
                 if (fetchedPlace) {
                     setPlace(fetchedPlace);
+                    setPlaceError(null);
                 } else {
                     setPlaceError('Place not found');
                 }
@@ -207,13 +217,41 @@ export default function PlaceScreen() {
                     </LinearGradient>
                 </Animated.View>
 
-                <StaleIndicator lastUpdate={place.lastUpdate} />
+                <StaleIndicator
+                    lastUpdate={place.adminOverride?.active
+                        ? place.adminOverride.setAt ?? place.lastUpdate
+                        : place.lastUpdate}
+                />
 
                 <Animated.View
                     entering={FadeInUp.duration(500).delay(200)}
                     style={styles.statusSection}
                 >
-                    {!location && (
+                    {(isLocationDenied || canPromptForLocation) && (
+                        <View style={styles.statusCard}>
+                            <View style={styles.statusIconWrapper}>
+                                <Text style={styles.statusIcon}>🚫</Text>
+                            </View>
+                            <View style={styles.statusTextContainer}>
+                                <Text style={styles.statusText}>Location is off</Text>
+                                <Text style={styles.statusHint}>
+                                    {isLocationDenied
+                                        ? 'Turn on location for Campus Spots in Settings to check in'
+                                        : 'Enable location to check in'}
+                                </Text>
+                                <Pressable
+                                    style={styles.actionButton}
+                                    onPress={isLocationDenied ? () => Linking.openSettings() : requestPermission}
+                                    accessibilityRole="button"
+                                >
+                                    <Text style={styles.actionButtonText}>
+                                        {isLocationDenied ? 'Open Settings' : 'Enable Location'}
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    )}
+                    {!location && !isLocationDenied && !canPromptForLocation && (
                         <View style={styles.statusCard}>
                             <View style={styles.statusIconWrapper}>
                                 <Text style={styles.statusIcon}>📍</Text>
@@ -270,9 +308,19 @@ export default function PlaceScreen() {
                         <Text style={styles.helperText}>Signing you in...</Text>
                     )}
                     {!authLoading && !uid && (
-                        <Text style={styles.helperText}>
-                            Sign-in failed. Please try again.
-                        </Text>
+                        <View style={styles.authErrorContainer}>
+                            <Text style={styles.helperText}>
+                                {authError ?? 'Sign-in failed. Please try again.'}
+                            </Text>
+                            <Pressable
+                                style={[styles.actionButton, styles.actionButtonCentered]}
+                                onPress={retrySignIn}
+                                accessibilityRole="button"
+                                accessibilityLabel="Retry sign-in"
+                            >
+                                <Text style={styles.actionButtonText}>Retry</Text>
+                            </Pressable>
+                        </View>
                     )}
                     {checkInError && (
                         <Text style={styles.helperText}>{checkInError}</Text>
@@ -446,6 +494,27 @@ const styles = StyleSheet.create({
         color: COLORS.neutral[700],
         textAlign: 'center',
         marginBottom: SPACING[3],
+    },
+    authErrorContainer: {
+        alignItems: 'center',
+        marginBottom: SPACING[3],
+    },
+    actionButton: {
+        alignSelf: 'flex-start',
+        marginTop: SPACING[2],
+        paddingHorizontal: SPACING[4],
+        paddingVertical: SPACING[2],
+        backgroundColor: COLORS.primary[500],
+        borderRadius: RADIUS.md,
+    },
+    actionButtonCentered: {
+        alignSelf: 'center',
+        marginTop: 0,
+    },
+    actionButtonText: {
+        color: SEMANTIC_COLORS.text.inverse,
+        fontFamily: FONTS.body.bold,
+        fontSize: FONT_SIZES.sm,
     },
     adminDivider: {
         height: 1,

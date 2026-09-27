@@ -5,14 +5,24 @@ import { signInAnon, subscribeToAuthState } from '@/services/authService';
 interface AuthSnapshot {
     user: User | null;
     isLoading: boolean;
+    hasResolved: boolean;
     error: string | null;
 }
 
 let authSnapshot: AuthSnapshot = {
     user: null,
     isLoading: true,
+    hasResolved: false,
     error: null,
 };
+
+function getSignInErrorMessage(error: unknown): string {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === 'auth/network-request-failed') {
+        return 'No internet connection. Connect to a network and try again.';
+    }
+    return 'Sign-in failed. Please try again.';
+}
 
 const listeners = new Set<() => void>();
 let authUnsubscribe: (() => void) | null = null;
@@ -33,6 +43,7 @@ function ensureAuthSubscription() {
                 user: firebaseUser,
                 error: null,
                 isLoading: false,
+                hasResolved: true,
             };
             emitChange();
             return;
@@ -48,6 +59,7 @@ function ensureAuthSubscription() {
         }
 
         authSnapshot = {
+            ...authSnapshot,
             user: null,
             error: null,
             isLoading: true,
@@ -59,8 +71,9 @@ function ensureAuthSubscription() {
             .catch((error) => {
                 authSnapshot = {
                     user: null,
-                    error: (error as Error).message,
+                    error: getSignInErrorMessage(error),
                     isLoading: false,
+                    hasResolved: true,
                 };
                 emitChange();
             })
@@ -100,8 +113,9 @@ async function retrySignIn(): Promise<void> {
         .catch((error) => {
             authSnapshot = {
                 user: null,
-                error: (error as Error).message,
+                error: getSignInErrorMessage(error),
                 isLoading: false,
+                hasResolved: true,
             };
             emitChange();
         })
@@ -113,12 +127,13 @@ async function retrySignIn(): Promise<void> {
 }
 
 export function useAuth() {
-    const { user, isLoading, error } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    const { user, isLoading, hasResolved, error } = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
     return {
         user,
         uid: user?.uid ?? null,
         isLoading,
+        hasResolved,
         error,
         retrySignIn,
     };
