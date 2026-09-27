@@ -21,7 +21,7 @@ import { COLORS } from '@/constants/theme';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-    const { isLoading: authLoading } = useAuth();
+    const { hasResolved: authResolved } = useAuth();
 
     const [fontsLoaded, fontError] = useFonts({
         Outfit_500Medium,
@@ -46,7 +46,8 @@ export default function RootLayout() {
         return null;
     }
 
-    if (authLoading) {
+    // Only gate the first auth check; later retries must not unmount the navigator.
+    if (!authResolved) {
         return (
             <View style={{
                 flex: 1,

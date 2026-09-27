@@ -1,5 +1,6 @@
-import { db } from '@/config/firebase';
-import { doc, getDoc, updateDoc, deleteField, serverTimestamp } from 'firebase/firestore';
+import { db, functions } from '@/config/firebase';
+import { doc, updateDoc, deleteField, serverTimestamp } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { getCurrentUserUID } from '@/services/authService';
 
 function assertValidPlaceId(placeId: string): void {
@@ -24,16 +25,18 @@ async function assertCurrentUserIsAdmin(): Promise<string> {
     return uid;
 }
 
-export async function checkIsAdmin(uid: string): Promise<boolean> {
-    const adminsRef = doc(db, 'config', 'admins');
-    const adminsSnap = await getDoc(adminsRef);
-
-    if (!adminsSnap.exists()) return false;
-
-    const data = adminsSnap.data();
-    const uids = data?.uids as string[] | undefined;
-
-    return Array.isArray(uids) && uids.includes(uid);
+/**
+ * Checks admin status via callable so clients never read the admin UID list.
+ */
+export async function checkIsAdmin(_uid: string): Promise<boolean> {
+    try {
+        const call = httpsCallable<Record<string, never>, { isAdmin: boolean }>(functions, 'checkAdminStatus');
+        const response = await call({});
+        return response.data.isAdmin === true;
+    } catch (error) {
+        console.error('[adminService] Failed to check admin status:', error);
+        return false;
+    }
 }
 
 export async function setAdminOverride(placeId: string, busyPercent: number): Promise<void> {

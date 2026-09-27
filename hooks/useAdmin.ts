@@ -21,12 +21,15 @@ export function useAdmin(uid: string | null): UseAdminReturn {
             return;
         }
 
+        setIsLoading(true);
+
         async function check() {
             try {
                 const result = await checkIsAdmin(uid!);
                 if (!cancelled) setIsAdmin(result);
             } catch (err) {
                 console.error('[useAdmin] Failed to check admin status:', err);
+                if (!cancelled) setIsAdmin(false);
             } finally {
                 if (!cancelled) setIsLoading(false);
             }

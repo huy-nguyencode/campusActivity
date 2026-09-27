@@ -1,14 +1,21 @@
 import * as Location from 'expo-location';
 import { LocationState, LocationPermissionStatus } from '@/types';
 
+function normalizePermissionStatus(status: Location.PermissionStatus): LocationPermissionStatus {
+    // expo-location already reports iOS "restricted" (parental controls / MDM) as DENIED.
+    if (status === Location.PermissionStatus.GRANTED) return 'granted';
+    if (status === Location.PermissionStatus.DENIED) return 'denied';
+    return 'undetermined';
+}
+
 export async function requestLocationPermission(): Promise<LocationPermissionStatus> {
     const { status } = await Location.requestForegroundPermissionsAsync();
-    return status as LocationPermissionStatus;
+    return normalizePermissionStatus(status);
 }
 
 export async function checkLocationPermission(): Promise<LocationPermissionStatus> {
     const { status } = await Location.getForegroundPermissionsAsync();
-    return status as LocationPermissionStatus;
+    return normalizePermissionStatus(status);
 }
 
 export async function watchLocation(

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState, useCallback, useMemo } from 'react';
@@ -34,7 +34,7 @@ export default function PlacesScreen() {
         }
     }, [refresh]);
 
-    if (isLoading && !refreshing) {
+    if (isLoading && places.length === 0) {
         return (
             <View style={styles.centered}>
                 <Text style={styles.loadingEmoji}>📍</Text>
@@ -50,11 +50,21 @@ export default function PlacesScreen() {
 
     if (error) {
         return (
-            <View style={styles.centered}>
+            <ScrollView
+                contentContainerStyle={styles.centered}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor={COLORS.primary[500]}
+                        colors={[COLORS.primary[500]]}
+                    />
+                }
+            >
                 <Text style={styles.errorIcon}>😕</Text>
                 <Text style={styles.errorText}>Unable to load places</Text>
                 <Text style={styles.errorHint}>Pull down to retry</Text>
-            </View>
+            </ScrollView>
         );
     }
 

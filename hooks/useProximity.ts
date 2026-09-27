@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Place, LocationState, ProximityResult } from '@/types';
+import { Place, LocationState } from '@/types';
 import { calculateProximityForAllPlaces, isAccuracyGoodEnough } from '@/services/proximityService';
 
 export function useProximity(places: Place[], location: LocationState | null) {

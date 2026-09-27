@@ -56,18 +56,13 @@ service cloud.firestore {
      * CONFIG COLLECTION
      *
      * Stores app-wide configuration (e.g., admin UIDs list).
-     * Readable by authenticated users (needed to check admin status).
-     * Only editable via Firebase Console (no client writes).
-     *
-     * LEARNING POINT: Console-Only Collections
-     *
-     * Some data should never be written by clients. By setting
-     * write to false, only Firebase Console and Admin SDK can modify
-     * this data. The client can still read it to check permissions.
+     * Not client-readable — admin UID lists must not be enumerable.
+     * Clients check admin status via the checkAdminStatus callable.
+     * Security rules still use get() here for isAdmin() on place updates.
+     * Only editable via Firebase Console / Admin SDK.
      */
     match /config/{docId} {
-      allow read: if isAuthenticated();
-      allow write: if false;
+      allow read, write: if false;
     }
 
     /**

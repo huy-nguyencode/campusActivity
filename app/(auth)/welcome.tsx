@@ -84,7 +84,7 @@ export default function Welcome() {
                         <View style={styles.infoTextContainer}>
                             <Text style={styles.infoTitle}>Privacy First</Text>
                             <Text style={styles.infoDescription}>
-                                Your location is only used to show nearby places. No data is stored.
+                                Your location is only used to find nearby places and verify check-ins. It is never stored. Check-ins are anonymous and deleted after 90 minutes.
                             </Text>
                         </View>
                     </View>

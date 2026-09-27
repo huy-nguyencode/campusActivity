@@ -58,7 +58,13 @@ export function CooldownTimer({ endTime, onComplete }: CooldownTimerProps) {
     }));
 
     useEffect(() => {
-        setRemaining(calculateRemaining());
+        const initialRemaining = calculateRemaining();
+        setRemaining(initialRemaining);
+
+        if (initialRemaining <= 0) {
+            onComplete?.();
+            return;
+        }
 
         const interval = setInterval(() => {
             const newRemaining = calculateRemaining();

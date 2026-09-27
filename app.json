@@ -2,7 +2,7 @@
   "expo": {
     "name": "Campus Spots",
     "slug": "campusActivity",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "campusactivity",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.huynguyen.campusspots",
-      "buildNumber": "8",
+      "buildNumber": "10",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": []
       },
