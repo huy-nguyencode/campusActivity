@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import Entypo from '@expo/vector-icons/Entypo';
 import Feather from '@expo/vector-icons/Feather';
-import { COLORS } from '@/constants/theme';
+import { COLORS } from '@/constants/theme-tokens';
 import { FloatingTabBar } from '@/components/navigation/FloatingTabBar';
 
 export default function TabsLayout() {

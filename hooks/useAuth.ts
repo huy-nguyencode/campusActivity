@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { User } from 'firebase/auth';
-import { signInAnon, subscribeToAuthState } from '@/services/authService';
+import { signInAnon, subscribeToAuthState } from '@/services/auth-service';
 
 interface AuthSnapshot {
     user: User | null;

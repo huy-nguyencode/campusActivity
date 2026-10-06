@@ -4,7 +4,7 @@ import Animated, {
     useSharedValue,
     withSpring,
 } from 'react-native-reanimated';
-import { Place } from '@/types';
+import { Place } from '@/types/domain';
 import {
     COLORS,
     FONTS,
@@ -15,7 +15,7 @@ import {
     ANIMATION,
     SEMANTIC_COLORS,
     getBusyStatus,
-} from '@/constants/theme';
+} from '@/constants/theme-tokens';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

@@ -1,8 +1,8 @@
 import { useCallback, useSyncExternalStore } from 'react';
 import { AppState, type NativeEventSubscription } from 'react-native';
 import * as Location from 'expo-location';
-import { LocationState, LocationPermissionStatus } from '@/types';
-import { checkLocationPermission, requestLocationPermission, watchLocation } from '@/services/locationService';
+import { LocationState, LocationPermissionStatus } from '@/types/domain';
+import { checkLocationPermission, requestLocationPermission, watchLocation } from '@/services/location-service';
 
 interface LocationSnapshot {
     location: LocationState | null;

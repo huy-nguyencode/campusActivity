@@ -1,73 +1,90 @@
 # Campus Spots
 
-A real-time crowd-tracking iOS app for Temple University's campus. Students can check in at campus locations (dining halls, libraries, food trucks, etc.) to report how busy a spot is — helping others decide where to go before they walk there.
+An Expo React Native app for reporting and viewing crowd levels at Temple University campus locations.
 
-## Features
+Students browse a map or list, then report a crowd level when they are within 50 meters of a place. Firebase Anonymous Auth identifies the user; a callable function validates the location and enforces a 90-minute cooldown. The server stores reports, not submitted GPS coordinates.
 
-- **Interactive map** — All campus spots plotted on a live map with type-based icons
-- **List view** — Alphabetically sorted list of all locations with busy status
-- **Real-time crowd data** — Busy levels update every 5 minutes via a Firebase Cloud Function
-- **Anonymous check-in** — Rate a spot as Not Busy / Moderate / Very Busy when you're within 50m
-- **90-minute cooldown** — Prevents spam; a countdown timer shows when you can check in again
-- **Stale data indicator** — Warns users when data hasn't been updated in a while
-- **Admin override** — Admins can manually pin a location's busy level, bypassing the aggregation
-- **Privacy first** — No account required; location is used only on-device and never stored
+## Project layout
 
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | React Native + Expo (SDK 57) |
-| Navigation | Expo Router (file-based) |
-| Language | TypeScript |
-| Database | Firebase Firestore (real-time) |
-| Auth | Firebase Anonymous Auth |
-| Backend | Firebase Cloud Functions (scheduled) |
-| Maps | react-native-maps |
-| Animation | React Native Reanimated |
-| Fonts | Outfit (display) + Figtree (body) |
-
-## How It Works
-
-1. A user opens the app and checks in at a nearby location, selecting a busy level (1–3).
-2. Check-ins are written to Firestore. A Cloud Function runs every 5 minutes and computes a weighted average using exponential decay (30-minute half-life) so recent check-ins matter more.
-3. The resulting `busyPercent` (0–100) is written back to each place document.
-4. All clients subscribed via `onSnapshot` receive the update instantly.
-
-## Project Structure
-
-```
-app/                  Expo Router screens
-  (auth)/welcome      Location permission onboarding
-  (tabs)/index        Map screen
-  (tabs)/places       List screen
-  place/[id]          Place detail + check-in
-components/           Reusable UI components
-docs/                 Architecture, spec, implementation, and privacy docs
-  admin/              Admin override panel
-  checkin/            Check-in buttons, cooldown timer, stale indicator
-  map/                Custom map marker
-  navigation/         Floating pill tab bar
-  places/             Place card
-config/               Firebase initialization
-constants/            Theme tokens and app config
-functions/src/        Cloud Function (busy percent aggregation)
-hooks/                Custom React hooks
-services/             Purpose-built domain services
-types/                TypeScript interfaces
-utils/                Shared calculation helpers
+```text
+app/                         Expo Router routes and navigation layouts
+screens/                     Named screen implementations
+  AppEntryScreen.tsx         Initial location-permission routing
+  LocationWelcomeScreen.tsx  Location onboarding
+  MapScreen.tsx              Campus map
+  PlacesListScreen.tsx       Campus list
+  PlaceDetailsScreen.tsx     Place details, check-in, and admin controls
+components/                  Reusable UI (PascalCase filenames)
+hooks/                       React state adapters (useName filenames)
+services/                    Firebase/device integrations (kebab-case filenames)
+  place-subscriptions.ts     Shared, foreground-only collection/document listeners
+  place-document-mapper.ts   Validate database documents and convert them to Place
+  check-in-service.ts        Callable requests and local cooldown storage
+  admin-service.ts           Cached permission hints and protected override writes
+config/firebase-client.ts    Client initialization and optional emulator connections
+constants/app-config.ts      Client behavior and distance thresholds
+constants/theme-tokens.ts    Colors, typography, and spacing
+types/domain.ts              Shared client data types
+utils/geo-distance.ts        Pure distance calculations
+data/campus-places.json      36 campus places for seeding
+functions/src/
+  index.ts                   Stable Firebase deployment exports
+  callable/                  Check-in and admin-status request handlers
+  scheduled/                 15-minute crowd refresh and hourly retention cleanup
+  operations/                Database orchestration for crowd aggregation
+  domain/                    Pure crowd math and server check-in validation
+  shared/                    Admin connection, configuration, types, runtime settings
+scripts/                     Seed, simulate, clean up test data, and export docs
+docs/                        Developer walkthrough, design, costs, product, privacy
 ```
 
-## Getting Started
+Expo Router and tools depend on names such as `index.tsx`, `_layout.tsx`, `package.json`, and `firebase.json`. Route files re-export named screens so navigation stays stable. Services and scripts use kebab-case; React components and hooks follow their usual naming conventions.
+
+## Development
 
 ```bash
 npm install
-npm start          # Expo development server
-npm run ios        # iOS simulator
-npm run android    # Android emulator
-npm run lint       # ESLint
+npm --prefix functions install
+npm start
+npm run ios
+npm run android
 ```
 
-## Campus Data
+To use Firebase locally, copy `.env.example` to `.env.local`, then run `npm run emulators` in one terminal and `npm start` in another. Restart Expo after changing environment variables. The Firebase CLI and a Java runtime compatible with its Firestore emulator must be installed.
 
-33 Temple University locations are seeded: dining halls (J&H, Morgan Hall), Charles Library, IBC Student Recreation Center, The Wall vendors, and off-campus food trucks and restaurants.
+For an iOS simulator the emulator host is `127.0.0.1`; for an Android emulator use `10.0.2.2`. On a physical device use the computer's LAN IP. Release builds always use the cloud. Omitting the emulator flag during development also uses the cloud.
+
+Seed the running local emulator:
+
+```bash
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=campusactivity-ec1f2 npm run seed:places
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=campusactivity-ec1f2 npm run simulate:check-ins -- --place charles-library --level 2 --count 3
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=campusactivity-ec1f2 npm run cleanup:test-check-ins
+```
+
+Data scripts require the emulator environment variable or an explicit `--production` argument for cloud writes. Production scripts also need Admin SDK credentials. Seeding replaces place documents; use it to initialize data rather than refresh an active campus.
+
+## Cost behavior
+
+Crowd summaries refresh every **15 minutes**. The aggregation queries recent check-ins, places with a saved crowd timestamp, and places with a nonzero crowd level. It fetches any additional places referenced by first check-ins. This avoids scanning every idle place while still resetting expired summaries and preserving admin overrides. Changed documents are written with version checks so concurrent admin edits trigger a retry rather than being overwritten.
+
+Scheduled functions use fractional CPU and zero reserved instances. The hourly cleanup still removes old reports and cooldowns. The app shares listeners between the map, list, and details, falls back to a single-document listener for direct links, and suspends them in the background. Admin permission hints are cached for five minutes; Firestore rules authorize every override write.
+
+See [the cost walkthrough](docs/firebase-costs.md) for exact code paths, estimates, tradeoffs, and deployment instructions. These changes do not guarantee a zero bill: free quotas, database eligibility, credits, active users, and deployment storage also matter.
+
+## Verification
+
+```bash
+npm run typecheck
+npm run lint
+npm test -- --runInBand --watchman=false
+npm run test:functions
+```
+
+Tests use mocks and local calculations; these commands do not access production Firebase.
+
+## Further reading
+
+- [Developer guide](docs/developer-guide.md)
+- [System design](docs/system-design.md)
+- [Privacy policy](docs/privacy-policy.md)

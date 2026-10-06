@@ -1,5 +1,7 @@
 # Campus Spots - Technical Specification
 
+For the current implementation and cost behavior, see [the project layout](../README.md#project-layout) and [Firebase costs](firebase-costs.md). Examples below are design references; source modules are authoritative.
+
 A comprehensive guide to the Campus Spots mobile application architecture, patterns, and implementation details. Written for junior engineers learning mobile development.
 
 ---
@@ -42,7 +44,7 @@ Campus Spots is a privacy-focused mobile app that shows real-time crowd levels a
 
 ```
 Frontend:
-├── React Native (Expo SDK 54)
+├── React Native (Expo SDK 57)
 ├── TypeScript
 ├── Expo Router (file-based navigation)
 └── react-native-maps
@@ -68,7 +70,7 @@ Campus Spots follows a **layered architecture** where each layer has a specific 
 │    (Screens, Buttons, Markers)      │
 ├─────────────────────────────────────┤
 │           Custom Hooks              │  ← Bridge between UI and services
-│   (useAuth, usePlaces, useCheckIn)  │
+│   (useAuth, useLivePlaces, usePlaceCheckIn)  │
 ├─────────────────────────────────────┤
 │             Services                │  ← Business logic and API calls
 │  (auth, places, checkin, location)  │
@@ -109,9 +111,9 @@ campusActivity/
 │
 ├── components/                   # Reusable UI components
 │   ├── checkin/                  # Check-in related components
-│   │   ├── CheckInButtons.tsx    # Emoji selection buttons
+│   │   ├── CrowdLevelButtons.tsx    # Emoji selection buttons
 │   │   ├── CooldownTimer.tsx     # Countdown display
-│   │   ├── StaleIndicator.tsx    # Outdated data warning
+│   │   ├── StaleCrowdIndicator.tsx    # Outdated data warning
 │   │   └── index.ts              # Barrel export
 │   ├── map/
 │   │   ├── PlaceMarker.tsx       # Map marker with callout
@@ -122,9 +124,9 @@ campusActivity/
 ├── hooks/                        # Custom React hooks
 │   ├── useAuth.ts                # Authentication state
 │   ├── useLocation.ts            # GPS tracking
-│   ├── usePlaces.ts              # Real-time places subscription
-│   ├── useProximity.ts           # Distance calculations
-│   └── useCheckIn.ts             # Check-in with cooldown
+│   ├── useLivePlaces.ts              # Real-time places subscription
+│   ├── usePlaceProximity.ts           # Distance calculations
+│   └── usePlaceCheckIn.ts             # Check-in with cooldown
 │
 ├── services/                     # Business logic layer
 │   ├── auth.ts                   # Firebase Auth operations
@@ -171,7 +173,7 @@ campusActivity/
 **Why:** They catch errors before your app runs and provide autocomplete.
 
 ```typescript
-// types/index.ts
+// types/domain.ts
 interface Place {
   id: string;
   name: string;
@@ -199,8 +201,8 @@ function displayPlace(place: Place) {
 **Why:** DRY (Don't Repeat Yourself) + separation of concerns.
 
 ```typescript
-// hooks/useCheckIn.ts
-export function useCheckIn(placeId: string | null) {
+// hooks/usePlaceCheckIn.ts
+export function usePlaceCheckIn(placeId: string | null) {
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [cooldownEndTime, setCooldownEndTime] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -218,7 +220,7 @@ export function useCheckIn(placeId: string | null) {
 
 // Usage in component - clean and simple!
 function PlaceScreen() {
-  const { checkIn, isOnCooldown, cooldownEndTime } = useCheckIn(placeId);
+  const { checkIn, isOnCooldown, cooldownEndTime } = usePlaceCheckIn(placeId);
   // All the complex state logic is hidden inside the hook
 }
 ```
@@ -234,7 +236,7 @@ function PlaceScreen() {
 **Why:** Isolates side effects from UI code.
 
 ```typescript
-// services/checkInService.ts
+// services/check-in-service.ts
 export async function submitCheckin(placeId: string, level: BusyLevel): Promise<CheckIn | null> {
   // Get authenticated user
   const uid = await getCurrentUserUID();
@@ -269,7 +271,7 @@ export async function submitCheckin(placeId: string, level: BusyLevel): Promise<
 **Why:** UI updates automatically when data changes, without manual refresh.
 
 ```typescript
-// services/placeService.ts
+// services/place-service.ts
 export function subscribePlaces(
   onUpdate: (places: Place[]) => void,
   onError: (error: Error) => void
@@ -288,7 +290,7 @@ export function subscribePlaces(
   );
 }
 
-// hooks/usePlaces.ts
+// hooks/useLivePlaces.ts
 useEffect(() => {
   const unsubscribe = subscribePlaces(setPlaces, setError);
   return unsubscribe;  // Cleanup on unmount
@@ -320,9 +322,9 @@ function PlaceScreen() {
   return (
     <View>
       <PlaceHeader place={place} />
-      <StaleIndicator lastUpdate={place.lastUpdate} />
+      <StaleCrowdIndicator lastUpdate={place.lastUpdate} />
       {isOnCooldown && <CooldownTimer endTime={cooldownEndTime} />}
-      <CheckInButtons onCheckIn={handleCheckIn} disabled={!canCheckIn} />
+      <CrowdLevelButtons onCheckIn={handleCheckIn} disabled={!canCheckIn} />
     </View>
   );
 }
@@ -339,7 +341,7 @@ function PlaceScreen() {
 **Why:** Easy to test, reason about, and debug.
 
 ```typescript
-// utils/distance.ts - Pure function
+// utils/geo-distance.ts - Pure function
 export function haversineDistance(
   lat1: number, lon1: number,
   lat2: number, lon2: number
@@ -377,7 +379,7 @@ User taps "😴 Not Busy"
         │
         ▼
 ┌─────────────────────┐
-│  CheckInButtons     │  Component calls onCheckIn(1)
+│  CrowdLevelButtons     │  Component calls onCheckIn(1)
 └─────────────────────┘
         │
         ▼
@@ -387,7 +389,7 @@ User taps "😴 Not Busy"
         │
         ▼
 ┌─────────────────────┐
-│  useCheckIn hook    │  Validates, sets loading, calls service
+│  usePlaceCheckIn hook    │  Validates, sets loading, calls service
 └─────────────────────┘
         │
         ▼
@@ -402,7 +404,7 @@ User taps "😴 Not Busy"
         │
         ▼
 ┌─────────────────────┐
-│  Cloud Function     │  (runs every 5 min)
+│  Cloud Function     │  (runs every 15 min)
 │  aggregateBusyPercent│  Calculates weighted average
 └─────────────────────┘
         │
@@ -413,7 +415,7 @@ User taps "😴 Not Busy"
         │
         ▼ (real-time subscription)
 ┌─────────────────────┐
-│  usePlaces hook     │  Receives updated place
+│  useLivePlaces hook     │  Receives updated place
 └─────────────────────┘
         │
         ▼
@@ -426,7 +428,7 @@ User taps "😴 Not Busy"
 
 ## Component Deep Dives
 
-### CheckInButtons Component
+### CrowdLevelButtons Component
 
 **Purpose:** Render emoji buttons for busyness selection.
 
@@ -438,13 +440,13 @@ User taps "😴 Not Busy"
 4. **Visual States:** Disabled, pressed, loading
 
 ```typescript
-interface CheckInButtonsProps {
+interface CrowdLevelButtonsProps {
   onCheckIn: (level: BusyLevel) => void;
   disabled?: boolean;
   isLoading?: boolean;
 }
 
-export function CheckInButtons({ onCheckIn, disabled = false, isLoading = false }) {
+export function CrowdLevelButtons({ onCheckIn, disabled = false, isLoading = false }) {
   const handlePress = async (level: BusyLevel) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onCheckIn(level);
@@ -518,7 +520,7 @@ Is the state needed by multiple unrelated components?
 └── NO → Keep in closest common ancestor
 
 Does the state represent server data?
-├── YES → Use real-time subscriptions + hooks (usePlaces)
+├── YES → Use real-time subscriptions + hooks (useLivePlaces)
 └── NO → Use local state (useState)
 
 Does the state persist across sessions?
@@ -559,7 +561,7 @@ Does the state persist across sessions?
 
 ### Cloud Function: Aggregation Algorithm
 
-The `aggregateBusyPercent` function runs every 5 minutes and calculates weighted busyness:
+The `aggregateBusyPercent` function runs every 15 minutes and calculates weighted busyness:
 
 1. **Load Recent Check-ins:** Get all check-ins from the last 90 minutes
 2. **Apply Exponential Decay:** Recent check-ins count more than old ones
@@ -631,11 +633,11 @@ describe('haversineDistance', () => {
 ### Component Tests
 
 ```typescript
-// components/__tests__/CheckInButtons.test.tsx
-describe('CheckInButtons', () => {
+// components/__tests__/CrowdLevelButtons.test.tsx
+describe('CrowdLevelButtons', () => {
   it('calls onCheckIn with correct level', () => {
     const mockOnCheckIn = jest.fn();
-    render(<CheckInButtons onCheckIn={mockOnCheckIn} />);
+    render(<CrowdLevelButtons onCheckIn={mockOnCheckIn} />);
 
     fireEvent.press(screen.getByText('Not Busy'));
 
@@ -643,7 +645,7 @@ describe('CheckInButtons', () => {
   });
 
   it('disables buttons when disabled prop is true', () => {
-    render(<CheckInButtons onCheckIn={jest.fn()} disabled />);
+    render(<CrowdLevelButtons onCheckIn={jest.fn()} disabled />);
 
     expect(screen.getByText('Not Busy')).toBeDisabled();
   });
@@ -653,15 +655,15 @@ describe('CheckInButtons', () => {
 ### Integration Tests (Hooks)
 
 ```typescript
-// hooks/__tests__/useCheckIn.test.ts
-describe('useCheckIn', () => {
+// hooks/__tests__/usePlaceCheckIn.test.ts
+describe('usePlaceCheckIn', () => {
   it('starts not on cooldown', () => {
-    const { result } = renderHook(() => useCheckIn('place-1'));
+    const { result } = renderHook(() => usePlaceCheckIn('place-1'));
     expect(result.current.isOnCooldown).toBe(false);
   });
 
   it('enters cooldown after check-in', async () => {
-    const { result } = renderHook(() => useCheckIn('place-1'));
+    const { result } = renderHook(() => usePlaceCheckIn('place-1'));
 
     await act(async () => {
       await result.current.checkIn(2);
@@ -760,7 +762,7 @@ firebase deploy
 firebase emulators:start
 
 # Seed places to Firestore
-npx ts-node scripts/seedPlaceCollection.ts
+npx ts-node scripts/seed-campus-places.ts
 ```
 
 ---
@@ -772,7 +774,7 @@ npx ts-node scripts/seedPlaceCollection.ts
 | Pattern | Example | Usage |
 |---------|---------|-------|
 | `camelCase.ts` | `useAuth.ts` | Hooks, services, utils |
-| `PascalCase.tsx` | `CheckInButtons.tsx` | Components |
+| `PascalCase.tsx` | `CrowdLevelButtons.tsx` | Components |
 | `[param].tsx` | `[id].tsx` | Dynamic routes |
 | `_layout.tsx` | `_layout.tsx` | Expo Router layouts |
 | `index.ts` | `index.ts` | Barrel exports |

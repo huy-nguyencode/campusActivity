@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { AdminOverride, BusyLevel } from '@/types';
-import { LEVEL_TO_PERCENT } from '@/constants/config';
+import { AdminOverride, BusyLevel } from '@/types/domain';
+import { LEVEL_TO_PERCENT } from '@/constants/app-config';
 import {
     COLORS,
     FONTS,
@@ -9,7 +9,7 @@ import {
     SPACING,
     RADIUS,
     SEMANTIC_COLORS,
-} from '@/constants/theme';
+} from '@/constants/theme-tokens';
 
 const BUSY_LEVELS: {
     level: BusyLevel;

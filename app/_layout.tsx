@@ -16,7 +16,7 @@ import {
 } from '@expo-google-fonts/figtree';
 import { useAuth } from '@/hooks/useAuth';
 import { ErrorBoundary } from '@/components/AppErrorBoundary';
-import { COLORS } from '@/constants/theme';
+import { COLORS } from '@/constants/theme-tokens';
 
 SplashScreen.preventAutoHideAsync();
 

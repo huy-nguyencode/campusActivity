@@ -17,8 +17,8 @@ import {
     RADIUS,
     SHADOWS,
     SEMANTIC_COLORS,
-} from '@/constants/theme';
-import { CONFIG } from '@/constants/config';
+} from '@/constants/theme-tokens';
+import { CONFIG } from '@/constants/app-config';
 
 interface CooldownTimerProps {
     endTime: Date;

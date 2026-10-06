@@ -14,7 +14,7 @@ import {
     RADIUS,
     SHADOWS,
     SEMANTIC_COLORS,
-} from '@/constants/theme';
+} from '@/constants/theme-tokens';
 
 type FloatingTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 

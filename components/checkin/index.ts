@@ -5,11 +5,11 @@
  * This simplifies imports throughout your app:
  *
  * Without barrel:
- *   import { CheckInButtons } from '@/components/checkin/CheckInButtons';
+ *   import { CrowdLevelButtons } from '@/components/checkin/CrowdLevelButtons';
  *   import { CooldownTimer } from '@/components/checkin/CooldownTimer';
  *
  * With barrel:
- *   import { CheckInButtons, CooldownTimer } from '@/components/checkin';
+ *   import { CrowdLevelButtons, CooldownTimer } from '@/components/checkin';
  *
  * Benefits:
  * 1. Cleaner imports - one line instead of many
@@ -19,6 +19,6 @@
  * Drawback:
  * - Can impact tree-shaking in some bundlers (less of an issue with modern tools)
  */
-export { CheckInButtons } from './CheckInButtons';
+export { CrowdLevelButtons } from './CrowdLevelButtons';
 export { CooldownTimer } from './CooldownTimer';
-export { StaleIndicator } from './StaleIndicator';
+export { StaleCrowdIndicator } from './StaleCrowdIndicator';

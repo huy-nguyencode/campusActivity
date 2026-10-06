@@ -17,10 +17,12 @@ npm run lint       # Run ESLint
 
 ### Routing Structure
 
-- `app/_layout.tsx` - Root layout with ThemeProvider and Stack navigator
-- `app/(tabs)/` - Tab group containing main screens (Home, Explore)
-- `app/(tabs)/_layout.tsx` - Tab navigator configuration with HapticTab buttons
-- `app/modal.tsx` - Modal screen example
+- `app/_layout.tsx` - Root fonts, auth gate, error boundary, and Stack navigator
+- `app/(tabs)/` - Map and places-list routes
+- `app/(tabs)/_layout.tsx` - Tab navigator with FloatingTabBar
+- `app/(auth)/welcome.tsx` - Location permission onboarding route
+- `app/place/[id].tsx` - Place details route
+- `screens/` - Named screen implementations re-exported by route files
 
 ## Remember
 
@@ -28,7 +30,7 @@ npm run lint       # Run ESLint
 
 ### Component Patterns
 
-**Themed Components**: `ThemedText` and `ThemedView` accept optional `lightColor` and `darkColor` props for theme-aware styling.
+**UI Components**: PascalCase filenames match exported components. Theme tokens live in `constants/theme-tokens.ts`.
 
 **Platform-specific files**: Use `.ios.tsx` and `.web.ts` suffixes for platform variants (e.g., `icon-symbol.ios.tsx`).
 
@@ -36,9 +38,12 @@ npm run lint       # Run ESLint
 
 ### Key Directories
 
-- `components/` - Reusable components; `components/ui/` contains low-level primitives
-- `hooks/` - Custom hooks (`useColorScheme`, `useThemeColor`)
-- `constants/theme.ts` - Color palette (`Colors.light`, `Colors.dark`) and font definitions
+- `components/` - Map markers, place cards, check-in controls, and navigation
+- `hooks/` - React state adapters such as `useLivePlaces`, `usePlaceCheckIn`, and `useAdminPermissions`
+- `services/` - Client integrations; shared foreground-only listeners live in `place-subscriptions.ts`
+- `functions/src/` - Callable and scheduled handlers, shared configuration, and domain calculations
+- `constants/theme-tokens.ts` - Colors, typography, spacing, and animation tokens
+- `docs/firebase-costs.md` - Current cost behavior, code paths, and deployment notes
 
 ### Configuration
 

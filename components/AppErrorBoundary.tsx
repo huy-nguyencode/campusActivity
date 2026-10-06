@@ -1,6 +1,6 @@
 import React, { Component, type ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS } from '@/constants/theme';
+import { COLORS, FONTS, FONT_SIZES, SPACING, RADIUS } from '@/constants/theme-tokens';
 
 interface Props {
     children: ReactNode;

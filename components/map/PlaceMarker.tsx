@@ -1,10 +1,10 @@
 import { Marker, Callout } from 'react-native-maps';
 import { View, Text, StyleSheet } from 'react-native';
-import { Place } from '@/types';
+import { Place } from '@/types/domain';
 import {
     COLORS,
     SHADOWS,
-} from '@/constants/theme';
+} from '@/constants/theme-tokens';
 
 interface PlaceMarkerProps {
     place: Place;
